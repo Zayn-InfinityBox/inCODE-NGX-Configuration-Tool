@@ -1,0 +1,7 @@
+# inCode NGX Configuration Tool
+# Python dependencies for CAN USB communication and GUI
+
+PyQt6>=6.6.0
+pyserial>=3.5
+pyinstaller>=6.3.0  # For creating executables
+
