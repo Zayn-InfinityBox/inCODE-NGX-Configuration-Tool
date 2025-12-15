@@ -252,7 +252,9 @@ class CANInterface(QObject):
     # Signals
     connected = pyqtSignal()
     disconnected = pyqtSignal()
+    connection_status_changed = pyqtSignal(bool)  # For connection page
     message_received = pyqtSignal(CANMessage)
+    frame_received = pyqtSignal(int, list)  # can_id, data list - simplified for UI
     raw_received = pyqtSignal(str)
     error = pyqtSignal(str)
     eeprom_read_complete = pyqtSignal(int, int)  # address, value
@@ -271,6 +273,13 @@ class CANInterface(QObject):
         self._target_sa = 0x80  # Default target source address
         self._write_pgn = PGN_EEPROM_WRITE
         self._read_pgn = PGN_EEPROM_READ
+    
+    def scan_ports(self) -> List[str]:
+        """Scan and return list of available serial port names"""
+        ports = []
+        for port in serial.tools.list_ports.comports():
+            ports.append(port.device)
+        return sorted(ports)
     
     @staticmethod
     def list_ports() -> List[Tuple[str, str]]:
@@ -360,6 +369,7 @@ class CANInterface(QObject):
         return self.send_j1939(3, self._read_pgn, self._target_sa, data)
     
     def _on_connection_changed(self, connected: bool):
+        self.connection_status_changed.emit(connected)
         if connected:
             self.connected.emit()
         else:
@@ -367,6 +377,8 @@ class CANInterface(QObject):
     
     def _on_message(self, msg: CANMessage):
         self.message_received.emit(msg)
+        # Also emit simplified signal for UI
+        self.frame_received.emit(msg.can_id, list(msg.data))
     
     def _on_eeprom_response(self, address: int, value: int, status: int):
         """Handle EEPROM response"""

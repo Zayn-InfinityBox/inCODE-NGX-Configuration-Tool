@@ -1,313 +1,367 @@
-#!/usr/bin/env python3
 """
-inCode NGX Configuration Tool
-
-Main application entry point.
-A professional configuration tool for MASTERCELL NGX and IOX devices.
-
-Copyright 2024 Infinitybox, LLC
+main.py - inCODE NGX Configuration Tool
+Single-page wizard application for MASTERCELL configuration
 """
 
 import sys
 import os
-
+from datetime import datetime
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout,
-    QStatusBar, QMessageBox, QLabel
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QStackedWidget, QLabel, QPushButton, QFrame, QProgressBar,
+    QMessageBox
 )
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QFont
 
-from styles import MAIN_STYLESHEET, COLORS
+from styles import MAIN_STYLESHEET, COLORS, ICONS
 from can_interface import CANInterface
-from config_data import FullConfiguration, InputConfig
-from widgets import ConnectionTab, SystemTab, InputsTab, MonitorTab, FilesTab
+from config_data import FullConfiguration
+
+# Import wizard pages
+from pages.welcome_page import WelcomePage
+from pages.connection_page import ConnectionPage
+from pages.inputs_page import InputsPage
+from pages.confirmation_page import ConfirmationPage
+from pages.write_page import WritePage
+
+
+class WizardNavigation(QWidget):
+    """Bottom navigation bar for wizard"""
+    
+    back_clicked = pyqtSignal()
+    next_clicked = pyqtSignal()
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(24, 16, 24, 16)
+        
+        self.back_btn = QPushButton("← Back")
+        self.back_btn.setMinimumWidth(120)
+        self.back_btn.clicked.connect(self.back_clicked.emit)
+        layout.addWidget(self.back_btn)
+        
+        layout.addStretch()
+        
+        # Step indicator
+        self.step_label = QLabel("Step 1 of 5")
+        self.step_label.setStyleSheet(f"color: {COLORS['text_secondary']};")
+        layout.addWidget(self.step_label)
+        
+        layout.addStretch()
+        
+        self.next_btn = QPushButton("Next →")
+        self.next_btn.setMinimumWidth(120)
+        self.next_btn.setObjectName("primaryButton")
+        self.next_btn.clicked.connect(self.next_clicked.emit)
+        layout.addWidget(self.next_btn)
+    
+    def set_step(self, current: int, total: int):
+        self.step_label.setText(f"Step {current} of {total}")
+        self.back_btn.setEnabled(current > 1)
+    
+    def set_next_text(self, text: str):
+        self.next_btn.setText(text)
+    
+    def set_next_enabled(self, enabled: bool):
+        self.next_btn.setEnabled(enabled)
+
+
+class StepIndicator(QWidget):
+    """Visual step indicator at top of wizard"""
+    
+    def __init__(self, steps: list, parent=None):
+        super().__init__(parent)
+        self.steps = steps
+        self.current_step = 0
+        self.step_labels = []
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(24, 16, 24, 16)
+        layout.setSpacing(0)
+        
+        for i, step_name in enumerate(self.steps):
+            # Step container
+            step_widget = QWidget()
+            step_layout = QVBoxLayout(step_widget)
+            step_layout.setSpacing(4)
+            step_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            # Circle with number
+            circle = QLabel(str(i + 1))
+            circle.setFixedSize(32, 32)
+            circle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            circle.setObjectName(f"stepCircle_{i}")
+            step_layout.addWidget(circle, alignment=Qt.AlignmentFlag.AlignCenter)
+            
+            # Step name
+            label = QLabel(step_name)
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label.setObjectName(f"stepLabel_{i}")
+            label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+            step_layout.addWidget(label)
+            
+            self.step_labels.append((circle, label))
+            layout.addWidget(step_widget)
+            
+            # Connector line (except after last step)
+            if i < len(self.steps) - 1:
+                line = QFrame()
+                line.setFrameShape(QFrame.Shape.HLine)
+                line.setFixedHeight(2)
+                line.setStyleSheet(f"background-color: {COLORS['border_default']};")
+                layout.addWidget(line, 1)
+        
+        self._update_styles()
+    
+    def set_step(self, step: int):
+        self.current_step = step
+        self._update_styles()
+    
+    def _update_styles(self):
+        for i, (circle, label) in enumerate(self.step_labels):
+            if i < self.current_step:
+                # Completed
+                circle.setStyleSheet(f"""
+                    background-color: {COLORS['accent_green']};
+                    color: white;
+                    border-radius: 16px;
+                    font-weight: bold;
+                """)
+                label.setStyleSheet(f"color: {COLORS['accent_green']}; font-size: 11px;")
+            elif i == self.current_step:
+                # Current
+                circle.setStyleSheet(f"""
+                    background-color: {COLORS['accent_blue']};
+                    color: white;
+                    border-radius: 16px;
+                    font-weight: bold;
+                """)
+                label.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 11px; font-weight: bold;")
+            else:
+                # Future
+                circle.setStyleSheet(f"""
+                    background-color: {COLORS['bg_lighter']};
+                    color: {COLORS['text_muted']};
+                    border-radius: 16px;
+                """)
+                label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
 
 
 class MainWindow(QMainWindow):
-    """Main application window"""
+    """Main application window with wizard flow"""
+    
+    STEPS = ["Welcome", "Connect", "Configure", "Review", "Write"]
     
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("inCODE NGX Configuration Tool")
+        self.setGeometry(100, 100, 1200, 800)
+        self.setMinimumSize(1000, 700)
         
-        self.setWindowTitle("inCode NGX Configuration Tool")
-        self.setMinimumSize(1200, 800)
-        self.resize(1400, 900)
-        
-        # Initialize CAN interface
+        # Core state
         self.can_interface = CANInterface()
+        self.configuration = FullConfiguration()
+        self.backup_config = None
         
-        # Current configuration
-        self.config = FullConfiguration()
+        # Ensure directories exist
+        self._ensure_directories()
         
-        # Setup UI
         self._setup_ui()
-        self._setup_menubar()
-        self._setup_statusbar()
         self._connect_signals()
+    
+    def _ensure_directories(self):
+        """Create backup and config directories if they don't exist"""
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        self.backup_dir = os.path.join(base_path, "backups")
+        self.config_dir = os.path.join(base_path, "configurations")
         
-        # Apply dark theme
-        self.setStyleSheet(MAIN_STYLESHEET)
+        os.makedirs(self.backup_dir, exist_ok=True)
+        os.makedirs(self.config_dir, exist_ok=True)
     
     def _setup_ui(self):
-        """Setup the main UI"""
-        # Central widget with tabs
         central = QWidget()
         self.setCentralWidget(central)
         
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        main_layout = QVBoxLayout(central)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
-        # Tab widget
-        self.tabs = QTabWidget()
-        self.tabs.setDocumentMode(True)
+        # Header with logo and title
+        header = QWidget()
+        header.setStyleSheet(f"background-color: {COLORS['bg_medium']}; border-bottom: 1px solid {COLORS['border_default']};")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 16, 24, 16)
         
-        # Create tabs
-        self.connection_tab = ConnectionTab(self.can_interface)
-        self.system_tab = SystemTab(self.can_interface)
-        self.inputs_tab = InputsTab(self.can_interface)
-        self.monitor_tab = MonitorTab(self.can_interface)
-        self.files_tab = FilesTab(self.can_interface)
+        title = QLabel("inCODE NGX Configuration Tool")
+        title.setFont(QFont("", 20, QFont.Weight.Bold))
+        header_layout.addWidget(title)
         
-        # Add tabs with icons/labels
-        self.tabs.addTab(self.connection_tab, "🔌 Connection")
-        self.tabs.addTab(self.system_tab, "⚙️ System")
-        self.tabs.addTab(self.inputs_tab, "🎚️ Inputs")
-        self.tabs.addTab(self.monitor_tab, "📊 Monitor")
-        self.tabs.addTab(self.files_tab, "💾 Files")
+        header_layout.addStretch()
         
-        layout.addWidget(self.tabs)
-    
-    def _setup_menubar(self):
-        """Setup the menu bar"""
-        menubar = self.menuBar()
+        version_label = QLabel("v0.1.0-alpha.1")
+        version_label.setStyleSheet(f"color: {COLORS['text_muted']};")
+        header_layout.addWidget(version_label)
         
-        # File menu
-        file_menu = menubar.addMenu("File")
+        main_layout.addWidget(header)
         
-        new_action = file_menu.addAction("New Configuration")
-        new_action.setShortcut("Ctrl+N")
-        new_action.triggered.connect(self._new_config)
+        # Step indicator
+        self.step_indicator = StepIndicator(self.STEPS)
+        main_layout.addWidget(self.step_indicator)
         
-        open_action = file_menu.addAction("Open Configuration...")
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self._open_config)
+        # Separator
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setStyleSheet(f"background-color: {COLORS['border_default']};")
+        main_layout.addWidget(sep)
         
-        save_action = file_menu.addAction("Save Configuration")
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self._save_config)
+        # Stacked widget for pages
+        self.pages = QStackedWidget()
         
-        save_as_action = file_menu.addAction("Save As...")
-        save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.triggered.connect(self._save_config_as)
+        # Create pages
+        self.welcome_page = WelcomePage(self.configuration)
+        self.connection_page = ConnectionPage(self.can_interface)
+        self.inputs_page = InputsPage(self.configuration)
+        self.confirmation_page = ConfirmationPage(self.configuration)
+        self.write_page = WritePage(self.can_interface, self.configuration, 
+                                     self.backup_dir, self.config_dir)
         
-        file_menu.addSeparator()
+        self.pages.addWidget(self.welcome_page)      # 0
+        self.pages.addWidget(self.connection_page)   # 1
+        self.pages.addWidget(self.inputs_page)       # 2
+        self.pages.addWidget(self.confirmation_page) # 3
+        self.pages.addWidget(self.write_page)        # 4
         
-        exit_action = file_menu.addAction("Exit")
-        exit_action.setShortcut("Ctrl+Q")
-        exit_action.triggered.connect(self.close)
+        main_layout.addWidget(self.pages, 1)
         
-        # Device menu
-        device_menu = menubar.addMenu("Device")
+        # Bottom navigation
+        self.nav = WizardNavigation()
+        self.nav.setStyleSheet(f"background-color: {COLORS['bg_medium']}; border-top: 1px solid {COLORS['border_default']};")
+        main_layout.addWidget(self.nav)
         
-        connect_action = device_menu.addAction("Connect...")
-        connect_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.connection_tab))
+        # Apply stylesheet
+        self.setStyleSheet(MAIN_STYLESHEET)
         
-        disconnect_action = device_menu.addAction("Disconnect")
-        disconnect_action.triggered.connect(self.can_interface.disconnect)
-        
-        device_menu.addSeparator()
-        
-        read_action = device_menu.addAction("Read All from Device")
-        read_action.triggered.connect(self._read_from_device)
-        
-        write_action = device_menu.addAction("Write All to Device")
-        write_action.triggered.connect(self._write_to_device)
-        
-        # View menu
-        view_menu = menubar.addMenu("View")
-        
-        connection_action = view_menu.addAction("Connection Tab")
-        connection_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.connection_tab))
-        
-        system_action = view_menu.addAction("System Tab")
-        system_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.system_tab))
-        
-        inputs_action = view_menu.addAction("Inputs Tab")
-        inputs_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.inputs_tab))
-        
-        monitor_action = view_menu.addAction("Monitor Tab")
-        monitor_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.monitor_tab))
-        
-        files_action = view_menu.addAction("Files Tab")
-        files_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.files_tab))
-        
-        # Help menu
-        help_menu = menubar.addMenu("Help")
-        
-        about_action = help_menu.addAction("About")
-        about_action.triggered.connect(self._show_about)
-    
-    def _setup_statusbar(self):
-        """Setup the status bar"""
-        self.statusbar = QStatusBar()
-        self.setStatusBar(self.statusbar)
-        
-        # Connection status
-        self.conn_status = QLabel("● Disconnected")
-        self.conn_status.setStyleSheet(f"color: {COLORS['text_muted']}; padding: 0 10px;")
-        self.statusbar.addWidget(self.conn_status)
-        
-        # Message counter
-        self.msg_counter = QLabel("Messages: 0")
-        self.msg_counter.setStyleSheet(f"color: {COLORS['text_secondary']}; padding: 0 10px;")
-        self.statusbar.addPermanentWidget(self.msg_counter)
-        
-        # Version
-        version_label = QLabel("v1.0.0")
-        version_label.setStyleSheet(f"color: {COLORS['text_muted']}; padding: 0 10px;")
-        self.statusbar.addPermanentWidget(version_label)
+        # Initial state
+        self._update_navigation()
     
     def _connect_signals(self):
-        """Connect signals between components"""
-        # Connection changes
-        self.can_interface.connected.connect(self._on_connected)
-        self.can_interface.disconnected.connect(self._on_disconnected)
-        self.can_interface.message_received.connect(self._on_message)
+        self.nav.back_clicked.connect(self._go_back)
+        self.nav.next_clicked.connect(self._go_next)
         
-        # Files tab callbacks
-        self.files_tab.set_get_config_callback(self._get_full_config)
-        self.files_tab.set_set_config_callback(self._set_full_config)
-        self.files_tab.config_loaded.connect(self._set_full_config)
+        # Page-specific signals
+        self.welcome_page.config_loaded.connect(self._on_config_loaded)
+        self.connection_page.connection_changed.connect(self._on_connection_changed)
+        self.write_page.write_complete.connect(self._on_write_complete)
     
-    def _on_connected(self):
-        """Handle connection established"""
-        self.conn_status.setText("● Connected")
-        self.conn_status.setStyleSheet(f"color: {COLORS['accent_green']}; padding: 0 10px;")
-        self.statusbar.showMessage("Connected to device", 3000)
-    
-    def _on_disconnected(self):
-        """Handle disconnection"""
-        self.conn_status.setText("● Disconnected")
-        self.conn_status.setStyleSheet(f"color: {COLORS['text_muted']}; padding: 0 10px;")
-        self.statusbar.showMessage("Disconnected from device", 3000)
-    
-    def _on_message(self, msg):
-        """Handle received message (update counter)"""
-        current = self.msg_counter.text().split(": ")[1]
-        try:
-            count = int(current) + 1
-            self.msg_counter.setText(f"Messages: {count}")
-        except:
-            pass
-    
-    def _get_full_config(self) -> FullConfiguration:
-        """Get current full configuration from all tabs"""
-        config = FullConfiguration()
-        config.system = self.system_tab.get_config()
+    def _update_navigation(self):
+        """Update navigation based on current page"""
+        current = self.pages.currentIndex()
+        self.step_indicator.set_step(current)
+        self.nav.set_step(current + 1, len(self.STEPS))
         
-        # Get input configs from inputs tab
-        input_configs = self.inputs_tab.get_all_configs()
-        for i, inp_config in input_configs.items():
-            if i <= len(config.inputs):
-                config.inputs[i-1] = inp_config
+        # Update next button text
+        if current == 0:
+            self.nav.set_next_text("Next →")
+            self.nav.set_next_enabled(True)
+        elif current == 1:
+            self.nav.set_next_text("Next →")
+            self.nav.set_next_enabled(self.can_interface.is_connected())
+        elif current == 2:
+            self.nav.set_next_text("Review Changes →")
+            self.nav.set_next_enabled(True)
+        elif current == 3:
+            self.nav.set_next_text("Write to Device →")
+            self.nav.set_next_enabled(True)
+        elif current == 4:
+            self.nav.set_next_text("Done")
+            self.nav.set_next_enabled(self.write_page.is_complete())
+    
+    def _go_back(self):
+        current = self.pages.currentIndex()
+        if current > 0:
+            self.pages.setCurrentIndex(current - 1)
+            self._update_navigation()
+    
+    def _go_next(self):
+        current = self.pages.currentIndex()
         
-        return config
-    
-    def _set_full_config(self, config: FullConfiguration):
-        """Set full configuration to all tabs"""
-        self.config = config
-        self.system_tab.set_config(config.system)
+        if current == 0:
+            # Welcome -> Connection
+            self.pages.setCurrentIndex(1)
         
-        # Set input configs
-        input_configs = {inp.input_number: inp for inp in config.inputs}
-        self.inputs_tab.set_all_configs(input_configs)
-    
-    def _new_config(self):
-        """Create new configuration"""
-        reply = QMessageBox.question(self, "New Configuration",
-            "Create a new configuration? This will clear all current settings.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        elif current == 1:
+            # Connection -> Inputs
+            if not self.can_interface.is_connected():
+                QMessageBox.warning(self, "Not Connected", 
+                    "Please connect to the GridConnect device before continuing.")
+                return
+            self.pages.setCurrentIndex(2)
         
-        if reply == QMessageBox.StandardButton.Yes:
-            self._set_full_config(FullConfiguration())
+        elif current == 2:
+            # Inputs -> Confirmation
+            self.inputs_page.save_current_input()
+            self.confirmation_page.refresh()
+            self.pages.setCurrentIndex(3)
+        
+        elif current == 3:
+            # Confirmation -> Write
+            self.write_page.prepare()
+            self.pages.setCurrentIndex(4)
+        
+        elif current == 4:
+            # Write -> Done (close or restart)
+            if self.write_page.is_complete():
+                reply = QMessageBox.question(self, "Configuration Complete",
+                    "Configuration has been written successfully!\n\n"
+                    "Would you like to configure another device?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                
+                if reply == QMessageBox.StandardButton.Yes:
+                    self._restart_wizard()
+                else:
+                    self.close()
+        
+        self._update_navigation()
     
-    def _open_config(self):
-        """Open configuration file"""
-        self.tabs.setCurrentWidget(self.files_tab)
-        self.files_tab._open_config()
+    def _restart_wizard(self):
+        """Reset and go back to welcome page"""
+        self.configuration = FullConfiguration()
+        self.welcome_page.reset()
+        self.inputs_page.set_configuration(self.configuration)
+        self.write_page.reset()
+        self.pages.setCurrentIndex(0)
+        self._update_navigation()
     
-    def _save_config(self):
-        """Save configuration"""
-        self.files_tab._save_config()
+    def _on_config_loaded(self, config: FullConfiguration):
+        """Handle configuration loaded from file or preset"""
+        self.configuration = config
+        self.inputs_page.set_configuration(config)
     
-    def _save_config_as(self):
-        """Save configuration as"""
-        self.files_tab._save_config_as()
+    def _on_connection_changed(self, connected: bool):
+        """Handle connection state change"""
+        self._update_navigation()
     
-    def _read_from_device(self):
-        """Read all config from device"""
-        self.tabs.setCurrentWidget(self.files_tab)
-        self.files_tab._read_all_from_device()
-    
-    def _write_to_device(self):
-        """Write all config to device"""
-        self.tabs.setCurrentWidget(self.files_tab)
-        self.files_tab._write_all_to_device()
-    
-    def _show_about(self):
-        """Show about dialog"""
-        QMessageBox.about(self, "About inCode NGX Configuration Tool",
-            "<h2>inCode NGX Configuration Tool</h2>"
-            "<p>Version 1.0.0</p>"
-            "<p>A professional configuration tool for MASTERCELL NGX and IOX devices.</p>"
-            "<p>Features:</p>"
-            "<ul>"
-            "<li>Configure 44 inputs with up to 10 cases each</li>"
-            "<li>No-code action templates for easy setup</li>"
-            "<li>Real-time CAN bus monitoring</li>"
-            "<li>Save/load configurations</li>"
-            "<li>Read/write device EEPROM</li>"
-            "</ul>"
-            "<p>Copyright © 2024 Infinitybox, LLC</p>"
-        )
+    def _on_write_complete(self, success: bool):
+        """Handle write completion"""
+        self._update_navigation()
     
     def closeEvent(self, event):
-        """Handle window close"""
-        # Disconnect if connected
-        if self.can_interface.is_connected():
-            self.can_interface.disconnect()
-        
+        """Clean up on close"""
+        self.can_interface.disconnect()
         event.accept()
 
 
 def main():
-    """Application entry point"""
-    # Enable high DPI scaling
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-    )
-    
     app = QApplication(sys.argv)
-    app.setApplicationName("inCode NGX Configuration Tool")
-    app.setOrganizationName("Infinitybox")
-    app.setOrganizationDomain("infinitybox.com")
+    app.setStyle("Fusion")
     
-    # Set application font (cross-platform)
-    font = app.font()
-    # Use system-appropriate font
-    import platform
-    if platform.system() == "Windows":
-        font.setFamily("Segoe UI")
-    elif platform.system() == "Darwin":
-        font.setFamily("SF Pro Display")
-    else:
-        font.setFamily("Ubuntu")
-    font.setPointSize(10)
-    app.setFont(font)
-    
-    # Create and show main window
     window = MainWindow()
     window.show()
     
@@ -316,4 +370,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

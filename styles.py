@@ -60,7 +60,7 @@ QMainWindow {{
 QWidget {{
     background-color: {COLORS['bg_dark']};
     color: {COLORS['text_primary']};
-    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', 'Ubuntu', sans-serif;
+    font-family: 'Helvetica Neue', 'Arial', sans-serif;
     font-size: 13px;
 }}
 

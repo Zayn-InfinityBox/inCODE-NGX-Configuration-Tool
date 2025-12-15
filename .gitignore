@@ -63,4 +63,6 @@ env/
 # Project specific
 *.log
 config_backup/
+backups/
+configurations/
 
