@@ -2,11 +2,12 @@
 inputs_page.py - Input configuration page (simplified, no per-input write)
 """
 
+from typing import List
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QGridLayout, QSpinBox, QLineEdit,
     QListWidget, QListWidgetItem, QSplitter, QScrollArea,
-    QFrame, QCheckBox, QSlider, QMessageBox
+    QFrame, QCheckBox, QSlider, QMessageBox, QMenu, QWidgetAction
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -17,6 +18,113 @@ from config_data import (
     DEVICES, DeviceDefinition, OutputConfig, OutputMode,
     PATTERN_PRESETS, get_input_definition, FullConfiguration
 )
+
+
+class MultiSelectDropdown(QWidget):
+    """Dropdown that allows selecting multiple inputs"""
+    
+    selection_changed = pyqtSignal()
+    
+    def __init__(self, placeholder: str = "Select inputs...", parent=None):
+        super().__init__(parent)
+        self.placeholder = placeholder
+        self.selected_items = []  # List of input numbers
+        self.checkboxes = {}  # input_number -> QCheckBox
+        
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # Button that shows selection and opens dropdown
+        self.button = QPushButton(self.placeholder)
+        self.button.setMinimumHeight(32)
+        self.button.setMinimumWidth(200)
+        self.button.setStyleSheet(f"""
+            QPushButton {{
+                text-align: left;
+                padding: 4px 8px;
+                padding-right: 20px;
+            }}
+        """)
+        self.button.clicked.connect(self._show_menu)
+        layout.addWidget(self.button)
+        
+        # Create the popup menu
+        self.menu = QMenu(self)
+        self.menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {COLORS['bg_light']};
+                border: 1px solid {COLORS['border_default']};
+                border-radius: 4px;
+                padding: 4px;
+            }}
+        """)
+        
+        # Add checkboxes for each input
+        for inp in INPUTS:
+            checkbox = QCheckBox(f"IN{inp.number:02d}: {inp.name}")
+            checkbox.setStyleSheet("padding: 4px 8px;")
+            checkbox.stateChanged.connect(self._on_checkbox_changed)
+            self.checkboxes[inp.number] = checkbox
+            
+            action = QWidgetAction(self.menu)
+            action.setDefaultWidget(checkbox)
+            self.menu.addAction(action)
+    
+    def _show_menu(self):
+        """Show the dropdown menu below the button"""
+        # Position menu below the button
+        pos = self.button.mapToGlobal(self.button.rect().bottomLeft())
+        self.menu.setMinimumWidth(self.button.width())
+        self.menu.exec(pos)
+    
+    def _on_checkbox_changed(self, state):
+        """Handle checkbox state change"""
+        self._update_selection()
+        self._update_button_text()
+        self.selection_changed.emit()
+    
+    def _update_selection(self):
+        """Update the selected_items list from checkboxes"""
+        self.selected_items = []
+        for input_num, checkbox in self.checkboxes.items():
+            if checkbox.isChecked():
+                self.selected_items.append(input_num)
+    
+    def _update_button_text(self):
+        """Update button text to show selection summary"""
+        if not self.selected_items:
+            self.button.setText(self.placeholder)
+        elif len(self.selected_items) == 1:
+            inp_num = self.selected_items[0]
+            inp = get_input_definition(inp_num)
+            name = inp.name if inp else f"IN{inp_num:02d}"
+            self.button.setText(f"IN{inp_num:02d}: {name}")
+        else:
+            self.button.setText(f"{len(self.selected_items)} inputs selected")
+    
+    def get_selected(self) -> List[int]:
+        """Get list of selected input numbers"""
+        return self.selected_items.copy()
+    
+    def set_selected(self, input_numbers: List[int]):
+        """Set selected inputs"""
+        self.selected_items = input_numbers.copy() if input_numbers else []
+        
+        # Update checkboxes
+        for input_num, checkbox in self.checkboxes.items():
+            checkbox.blockSignals(True)
+            checkbox.setChecked(input_num in self.selected_items)
+            checkbox.blockSignals(False)
+        
+        self._update_button_text()
+    
+    def clear_selection(self):
+        """Clear all selections"""
+        self.set_selected([])
 
 
 class OutputConfigWidget(QWidget):
@@ -135,10 +243,12 @@ class DeviceOutputsWidget(QWidget):
     
     changed = pyqtSignal()
     
-    def __init__(self, device: DeviceDefinition, parent=None):
+    def __init__(self, device: DeviceDefinition, show_header: bool = True, parent=None):
         super().__init__(parent)
         self.device = device
         self.output_widgets = []
+        self.show_header = show_header
+        self._enabled = False
         
         self._setup_ui()
     
@@ -147,25 +257,36 @@ class DeviceOutputsWidget(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(4)
         
-        # Device header with enable checkbox
-        header_layout = QHBoxLayout()
-        self.device_check = QCheckBox(self.device.name)
-        self.device_check.setFont(QFont("", 11, QFont.Weight.Bold))
-        self.device_check.stateChanged.connect(self._on_device_toggled)
-        header_layout.addWidget(self.device_check)
-        
-        pgn = f"0x{self.device.pgn_high:02X}{self.device.pgn_low:02X}"
-        pgn_label = QLabel(f"(PGN {pgn})")
-        pgn_label.setStyleSheet(f"color: {COLORS['text_muted']};")
-        header_layout.addWidget(pgn_label)
-        header_layout.addStretch()
-        layout.addLayout(header_layout)
+        if self.show_header:
+            # Device header with enable checkbox (only if showing header)
+            header_layout = QHBoxLayout()
+            self.device_check = QCheckBox(self.device.name)
+            self.device_check.setFont(QFont("", 11, QFont.Weight.Bold))
+            self.device_check.stateChanged.connect(self._on_device_toggled)
+            header_layout.addWidget(self.device_check)
+            
+            pgn = f"0x{self.device.pgn_high:02X}{self.device.pgn_low:02X}"
+            pgn_label = QLabel(f"(PGN {pgn})")
+            pgn_label.setStyleSheet(f"color: {COLORS['text_muted']};")
+            header_layout.addWidget(pgn_label)
+            header_layout.addStretch()
+            layout.addLayout(header_layout)
+        else:
+            # No header - create a hidden checkbox just to track state
+            self.device_check = QCheckBox()
+            self.device_check.setVisible(False)
         
         # Outputs container
         self.outputs_container = QWidget()
         outputs_layout = QVBoxLayout(self.outputs_container)
-        outputs_layout.setContentsMargins(20, 4, 0, 4)
+        outputs_layout.setContentsMargins(0 if not self.show_header else 20, 4, 0, 4)
         outputs_layout.setSpacing(2)
+        
+        # Label for selecting outputs (only when no header)
+        if not self.show_header:
+            outputs_label = QLabel("Select outputs to control:")
+            outputs_label.setStyleSheet(f"color: {COLORS['text_secondary']}; margin-bottom: 4px;")
+            outputs_layout.addWidget(outputs_label)
         
         # Create output widgets
         for i, output_name in enumerate(self.device.outputs):
@@ -177,12 +298,15 @@ class DeviceOutputsWidget(QWidget):
             self.output_widgets.append(widget)
             outputs_layout.addWidget(widget)
         
-        self.outputs_container.setVisible(False)
+        # Show outputs immediately if no header
+        self.outputs_container.setVisible(not self.show_header)
         layout.addWidget(self.outputs_container)
     
     def _on_device_toggled(self, state):
         enabled = state == Qt.CheckState.Checked.value
-        self.outputs_container.setVisible(enabled)
+        self._enabled = enabled
+        if self.show_header:
+            self.outputs_container.setVisible(enabled)
         
         if not enabled:
             for widget in self.output_widgets:
@@ -191,7 +315,14 @@ class DeviceOutputsWidget(QWidget):
         self.changed.emit()
     
     def is_enabled(self) -> bool:
-        return self.device_check.isChecked()
+        return self._enabled or self.device_check.isChecked()
+    
+    def set_enabled(self, enabled: bool):
+        """Enable/disable this device (used when no header)"""
+        self._enabled = enabled
+        self.device_check.setChecked(enabled)
+        if not self.show_header:
+            self.outputs_container.setVisible(enabled)
     
     def get_output_configs(self) -> dict:
         configs = {}
@@ -263,25 +394,41 @@ class CaseEditor(QWidget):
         content_layout.setContentsMargins(16, 8, 16, 16)
         content_layout.setSpacing(16)
         
-        # Device selection section header
-        devices_header = QLabel("Select Devices and Outputs to Control:")
-        devices_header.setFont(QFont("", 11, QFont.Weight.Bold))
-        devices_header.setStyleSheet(f"color: {COLORS['accent_blue']};")
-        content_layout.addWidget(devices_header)
+        # Device selection row
+        device_row = QHBoxLayout()
+        device_row.setSpacing(12)
         
-        # Device widgets - no scroll limit, full expansion
-        devices_container = QWidget()
-        devices_layout = QVBoxLayout(devices_container)
-        devices_layout.setSpacing(8)
-        devices_layout.setContentsMargins(0, 0, 0, 0)
+        device_label = QLabel("Device:")
+        device_label.setFont(QFont("", 11, QFont.Weight.Bold))
+        device_label.setStyleSheet(f"color: {COLORS['accent_blue']};")
+        device_row.addWidget(device_label)
         
+        self.device_combo = QComboBox()
+        self.device_combo.addItem("Select a device...", None)
         for device_id, device in DEVICES.items():
-            widget = DeviceOutputsWidget(device)
-            widget.changed.connect(self.changed)
-            self.device_widgets[device_id] = widget
-            devices_layout.addWidget(widget)
+            self.device_combo.addItem(f"{device.name}", device_id)
+        self.device_combo.setMinimumWidth(200)
+        self.device_combo.setMinimumHeight(32)
+        self.device_combo.currentIndexChanged.connect(self._on_device_changed)
+        device_row.addWidget(self.device_combo)
+        device_row.addStretch()
+        content_layout.addLayout(device_row)
         
-        content_layout.addWidget(devices_container)
+        # Outputs container - shows outputs for selected device
+        self.outputs_container = QWidget()
+        self.outputs_layout = QVBoxLayout(self.outputs_container)
+        self.outputs_layout.setSpacing(8)
+        self.outputs_layout.setContentsMargins(0, 8, 0, 0)
+        
+        # Create device widgets but keep them hidden initially
+        for device_id, device in DEVICES.items():
+            widget = DeviceOutputsWidget(device, show_header=False)
+            widget.changed.connect(self.changed)
+            widget.setVisible(False)
+            self.device_widgets[device_id] = widget
+            self.outputs_layout.addWidget(widget)
+        
+        content_layout.addWidget(self.outputs_container)
         
         # Separator
         sep = QFrame()
@@ -316,24 +463,34 @@ class CaseEditor(QWidget):
         settings_layout.addStretch()
         content_layout.addLayout(settings_layout)
         
-        # Checkboxes row
-        checks_layout = QHBoxLayout()
-        checks_layout.setSpacing(32)
+        # Conditions section
+        conditions_layout = QHBoxLayout()
+        conditions_layout.setSpacing(24)
         
-        self.set_ignition_check = QCheckBox("Controls ignition state")
-        self.set_ignition_check.setToolTip("This input turns ignition ON/OFF (like the key switch)")
-        checks_layout.addWidget(self.set_ignition_check)
+        # Must be ON dropdown
+        must_on_layout = QVBoxLayout()
+        must_on_label = QLabel("Must be ON:")
+        must_on_label.setToolTip("This case only activates if ALL selected inputs are currently ON")
+        must_on_layout.addWidget(must_on_label)
         
-        self.require_ignition_check = QCheckBox("Requires ignition ON")
-        self.require_ignition_check.setToolTip("Only activates when ignition is already ON")
-        checks_layout.addWidget(self.require_ignition_check)
+        self.must_on_dropdown = MultiSelectDropdown("None selected")
+        must_on_layout.addWidget(self.must_on_dropdown)
+        must_on_layout.addStretch()
+        conditions_layout.addLayout(must_on_layout)
         
-        self.require_neutral_check = QCheckBox("Requires neutral safety")
-        self.require_neutral_check.setToolTip("Only activates when neutral safety is engaged")
-        checks_layout.addWidget(self.require_neutral_check)
+        # Must be OFF dropdown
+        must_off_layout = QVBoxLayout()
+        must_off_label = QLabel("Must be OFF:")
+        must_off_label.setToolTip("This case only activates if ALL selected inputs are currently OFF")
+        must_off_layout.addWidget(must_off_label)
         
-        checks_layout.addStretch()
-        content_layout.addLayout(checks_layout)
+        self.must_off_dropdown = MultiSelectDropdown("None selected")
+        must_off_layout.addWidget(self.must_off_dropdown)
+        must_off_layout.addStretch()
+        conditions_layout.addLayout(must_off_layout)
+        
+        conditions_layout.addStretch()
+        content_layout.addLayout(conditions_layout)
         
         self.content.setVisible(False)
         self.main_layout.addWidget(self.content)
@@ -386,10 +543,24 @@ class CaseEditor(QWidget):
         self._update_style()
         self.changed.emit()
     
+    def _on_device_changed(self, index):
+        """Show only the outputs for the selected device"""
+        selected_device_id = self.device_combo.currentData()
+        
+        # Hide all device widgets, show only the selected one
+        for device_id, widget in self.device_widgets.items():
+            if device_id == selected_device_id:
+                widget.setVisible(True)
+                widget.set_enabled(True)  # Auto-enable outputs section
+            else:
+                widget.setVisible(False)
+                widget.reset()  # Reset hidden devices
+        
+        self.changed.emit()
+    
     def mousePressEvent(self, event):
         """Toggle expansion on header click"""
         if self.header.geometry().contains(event.pos()):
-            # Toggle the checkbox
             self.enable_check.setChecked(not self.enable_check.isChecked())
         super().mousePressEvent(event)
     
@@ -406,9 +577,8 @@ class CaseEditor(QWidget):
         
         config.mode = self.mode_combo.currentData() or 'momentary'
         config.pattern_preset = self.pattern_combo.currentData() or 'none'
-        config.set_ignition = self.set_ignition_check.isChecked()
-        config.require_ignition_on = self.require_ignition_check.isChecked()
-        config.require_security_on = self.require_neutral_check.isChecked()
+        config.must_be_on = self.must_on_dropdown.get_selected()
+        config.must_be_off = self.must_off_dropdown.get_selected()
         
         return config
     
@@ -416,10 +586,24 @@ class CaseEditor(QWidget):
         self.enable_check.setChecked(config.enabled)
         
         device_output_dict = dict(config.device_outputs) if config.device_outputs else {}
+        
+        # Set device dropdown and show appropriate widget
+        if device_output_dict:
+            # Get the first (and only) device
+            selected_device_id = list(device_output_dict.keys())[0]
+            idx = self.device_combo.findData(selected_device_id)
+            if idx >= 0:
+                self.device_combo.setCurrentIndex(idx)
+        else:
+            self.device_combo.setCurrentIndex(0)  # "Select a device..."
+        
         for device_id, widget in self.device_widgets.items():
             if device_id in device_output_dict:
+                widget.setVisible(True)
+                widget.set_enabled(True)
                 widget.set_output_configs(device_output_dict[device_id])
             else:
+                widget.setVisible(False)
                 widget.reset()
         
         idx = self.mode_combo.findData(config.mode)
@@ -430,19 +614,19 @@ class CaseEditor(QWidget):
         if idx >= 0:
             self.pattern_combo.setCurrentIndex(idx)
         
-        self.set_ignition_check.setChecked(config.set_ignition)
-        self.require_ignition_check.setChecked(config.require_ignition_on)
-        self.require_neutral_check.setChecked(config.require_security_on)
+        self.must_on_dropdown.set_selected(config.must_be_on or [])
+        self.must_off_dropdown.set_selected(config.must_be_off or [])
     
     def reset(self):
         self.enable_check.setChecked(False)
+        self.device_combo.setCurrentIndex(0)  # "Select a device..."
         for widget in self.device_widgets.values():
+            widget.setVisible(False)
             widget.reset()
         self.mode_combo.setCurrentIndex(0)
         self.pattern_combo.setCurrentIndex(0)
-        self.set_ignition_check.setChecked(False)
-        self.require_ignition_check.setChecked(False)
-        self.require_neutral_check.setChecked(False)
+        self.must_on_dropdown.clear_selection()
+        self.must_off_dropdown.clear_selection()
 
 
 class InputConfigPanel(QWidget):
