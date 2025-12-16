@@ -82,12 +82,14 @@ EEPROM_ADDR_DIAG_PGN_LOW = 0x14
 EEPROM_ADDR_DIAG_SA = 0x15
 EEPROM_ADDR_SERIAL = 0x16
 
-# Input configuration starts at address 23
-EEPROM_ADDR_INPUT_START = 23
-EEPROM_BYTES_PER_CASE = 11
+# Input configuration starts at address 0x0022 (34 decimal)
+# Per the J1939 EEPROM protocol: cases start at 0x0022, each case is 32 bytes
+EEPROM_ADDR_INPUT_START = 0x0022  # 34 decimal
+EEPROM_BYTES_PER_CASE = 32  # Each case is 32 bytes
 EEPROM_ON_CASES_PER_INPUT = 8
 EEPROM_OFF_CASES_PER_INPUT = 2
-EEPROM_BYTES_PER_INPUT = EEPROM_BYTES_PER_CASE * (EEPROM_ON_CASES_PER_INPUT + EEPROM_OFF_CASES_PER_INPUT)  # 110
+EEPROM_CASES_PER_INPUT = EEPROM_ON_CASES_PER_INPUT + EEPROM_OFF_CASES_PER_INPUT  # 10
+EEPROM_BYTES_PER_INPUT = EEPROM_BYTES_PER_CASE * EEPROM_CASES_PER_INPUT  # 320 bytes per input
 
 # =============================================================================
 # Device Definitions
@@ -445,14 +447,8 @@ class CaseConfig:
     # Conditions
     must_be_on: List[int] = field(default_factory=list)
     must_be_off: List[int] = field(default_factory=list)
-    require_ignition_on: bool = False
-    require_ignition_off: bool = False
-    require_security_on: bool = False
-    require_security_off: bool = False
-    rpm_above: int = 0
-    rpm_below: int = 0
-    speed_above: int = 0
-    speed_below: int = 0
+    # Note: Ignition/security conditions are handled via must_be_on/must_be_off
+    # using the special input numbers defined in EEPROM protocol (Byte 5, Bit 5 = ignition)
     
     def get_can_messages(self) -> List[Tuple[int, int, int, List[int]]]:
         """

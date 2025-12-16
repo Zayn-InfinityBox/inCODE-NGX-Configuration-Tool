@@ -21,7 +21,7 @@ from config_data import (
 
 
 class MultiSelectDropdown(QWidget):
-    """Dropdown that allows selecting multiple inputs"""
+    """Dropdown that allows selecting multiple inputs - 2 column scrollable layout"""
     
     selection_changed = pyqtSignal()
     
@@ -30,6 +30,8 @@ class MultiSelectDropdown(QWidget):
         self.placeholder = placeholder
         self.selected_items = []  # List of input numbers
         self.checkboxes = {}  # input_number -> QCheckBox
+        self.popup = None
+        self.setStyleSheet("background: transparent;")
         
         self._setup_ui()
     
@@ -40,46 +42,150 @@ class MultiSelectDropdown(QWidget):
         
         # Button that shows selection and opens dropdown
         self.button = QPushButton(self.placeholder)
-        self.button.setMinimumHeight(32)
+        self.button.setMinimumHeight(36)
         self.button.setMinimumWidth(200)
         self.button.setStyleSheet(f"""
             QPushButton {{
                 text-align: left;
-                padding: 4px 8px;
-                padding-right: 20px;
+                padding: 8px 12px;
+                padding-right: 24px;
+                background-color: rgba(70, 70, 70, 0.9);
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 13px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_primary']};
             }}
         """)
-        self.button.clicked.connect(self._show_menu)
+        self.button.clicked.connect(self._toggle_popup)
         layout.addWidget(self.button)
         
-        # Create the popup menu
-        self.menu = QMenu(self)
-        self.menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {COLORS['bg_light']};
-                border: 1px solid {COLORS['border_default']};
-                border-radius: 4px;
-                padding: 4px;
+        # Create popup widget (hidden initially)
+        self._create_popup()
+    
+    def _create_popup(self):
+        """Create the popup with 2-column scrollable grid"""
+        self.popup = QFrame(self.window())
+        self.popup.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
+        self.popup.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(55, 55, 55, 0.98);
+                border: none;
+                border-radius: 12px;
             }}
         """)
         
-        # Add checkboxes for each input
-        for inp in INPUTS:
-            checkbox = QCheckBox(f"IN{inp.number:02d}: {inp.name}")
-            checkbox.setStyleSheet("padding: 4px 8px;")
+        popup_layout = QVBoxLayout(self.popup)
+        popup_layout.setContentsMargins(12, 12, 12, 12)
+        popup_layout.setSpacing(8)
+        
+        # Scroll area for checkboxes
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet(f"""
+            QScrollArea {{
+                background: transparent;
+                border: none;
+            }}
+            QScrollBar:vertical {{
+                background: rgba(40, 40, 40, 0.5);
+                width: 8px;
+                border-radius: 4px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: rgba(120, 120, 120, 0.8);
+                border-radius: 4px;
+                min-height: 30px;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0;
+            }}
+        """)
+        
+        # Container for grid
+        container = QWidget()
+        container.setStyleSheet("background: transparent;")
+        grid = QGridLayout(container)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(6)
+        
+        # Add checkboxes in 2 columns
+        for i, inp in enumerate(INPUTS):
+            row = i // 2
+            col = i % 2
+            
+            # Show input number and name
+            label = f"IN{inp.number:02d}: {inp.name}" if inp.name else f"IN{inp.number:02d}"
+            checkbox = QCheckBox(label)
+            checkbox.setMinimumHeight(44)
+            checkbox.setStyleSheet(f"""
+                QCheckBox {{
+                    padding: 10px 14px;
+                    color: white;
+                    font-size: 14px;
+                    font-weight: 500;
+                    background: rgba(70, 70, 70, 0.6);
+                    border-radius: 8px;
+                }}
+                QCheckBox:hover {{
+                    background: rgba(90, 90, 90, 0.8);
+                }}
+                QCheckBox::indicator {{
+                    width: 22px;
+                    height: 22px;
+                    border-radius: 5px;
+                    border: none;
+                    background: rgba(100, 100, 100, 0.9);
+                }}
+                QCheckBox::indicator:hover {{
+                    background: rgba(120, 120, 120, 1.0);
+                }}
+                QCheckBox::indicator:checked {{
+                    background: {COLORS['accent_primary']};
+                }}
+            """)
             checkbox.stateChanged.connect(self._on_checkbox_changed)
             self.checkboxes[inp.number] = checkbox
-            
-            action = QWidgetAction(self.menu)
-            action.setDefaultWidget(checkbox)
-            self.menu.addAction(action)
+            grid.addWidget(checkbox, row, col)
+        
+        scroll.setWidget(container)
+        popup_layout.addWidget(scroll)
+        
+        # Initial size - will be resized dynamically when shown
+        self.popup.setMinimumWidth(650)
+        self.popup.setMinimumHeight(300)
     
-    def _show_menu(self):
-        """Show the dropdown menu below the button"""
-        # Position menu below the button
-        pos = self.button.mapToGlobal(self.button.rect().bottomLeft())
-        self.menu.setMinimumWidth(self.button.width())
-        self.menu.exec(pos)
+    def _toggle_popup(self):
+        """Toggle popup visibility"""
+        if self.popup.isVisible():
+            self.popup.hide()
+        else:
+            # Get screen geometry
+            screen = self.window().screen()
+            if screen:
+                screen_rect = screen.availableGeometry()
+                # Set popup to 50% of screen height, centered vertically
+                popup_height = int(screen_rect.height() * 0.5)
+                popup_width = 650
+                
+                self.popup.setFixedHeight(popup_height)
+                self.popup.setFixedWidth(popup_width)
+                
+                # Center horizontally relative to window, center vertically on screen
+                window_center = self.window().mapToGlobal(self.window().rect().center())
+                x = window_center.x() - popup_width // 2
+                y = screen_rect.top() + (screen_rect.height() - popup_height) // 2
+                
+                self.popup.move(x, y)
+            else:
+                # Fallback - position below button
+                pos = self.button.mapToGlobal(self.button.rect().bottomLeft())
+                self.popup.move(pos)
+            
+            self.popup.show()
     
     def _on_checkbox_changed(self, state):
         """Handle checkbox state change"""
@@ -100,9 +206,7 @@ class MultiSelectDropdown(QWidget):
             self.button.setText(self.placeholder)
         elif len(self.selected_items) == 1:
             inp_num = self.selected_items[0]
-            inp = get_input_definition(inp_num)
-            name = inp.name if inp else f"IN{inp_num:02d}"
-            self.button.setText(f"IN{inp_num:02d}: {name}")
+            self.button.setText(f"IN{inp_num:02d} selected")
         else:
             self.button.setText(f"{len(self.selected_items)} inputs selected")
     
@@ -138,19 +242,56 @@ class OutputConfigWidget(QWidget):
         self.output_name = output_name
         self.supports_pwm = supports_pwm
         self.config = OutputConfig()
+        self.setStyleSheet("background: transparent;")
         
         self._setup_ui()
     
     def _setup_ui(self):
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 4, 8, 4)
+        layout.setContentsMargins(8, 6, 8, 6)
         layout.setSpacing(12)
         
         # Enable checkbox
         self.enable_check = QCheckBox(self.output_name)
-        self.enable_check.setMinimumWidth(120)
+        self.enable_check.setMinimumWidth(140)
+        self.enable_check.setStyleSheet(f"""
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                font-size: 13px;
+                spacing: 8px;
+                background: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 20px;
+                height: 20px;
+                border-radius: 4px;
+                border: none;
+                background: rgba(80, 80, 80, 0.95);
+            }}
+            QCheckBox::indicator:checked {{
+                background: {COLORS['accent_primary']};
+            }}
+            QCheckBox::indicator:hover {{
+                background: rgba(100, 100, 100, 1.0);
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background: {COLORS['accent_secondary']};
+            }}
+        """)
         self.enable_check.stateChanged.connect(self._on_enable_changed)
         layout.addWidget(self.enable_check)
+        
+        # Mode card - contains mode dropdown and PWM controls
+        self.mode_card = QFrame()
+        self.mode_card.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(55, 55, 55, 0.95);
+                border-radius: 8px;
+            }}
+        """)
+        mode_card_layout = QHBoxLayout(self.mode_card)
+        mode_card_layout.setContentsMargins(10, 6, 10, 6)
+        mode_card_layout.setSpacing(10)
         
         # Mode dropdown
         self.mode_combo = QComboBox()
@@ -158,30 +299,39 @@ class OutputConfigWidget(QWidget):
         self.mode_combo.addItem("Soft-Start", OutputMode.SOFT_START)
         if self.supports_pwm:
             self.mode_combo.addItem("PWM", OutputMode.PWM)
-        self.mode_combo.setMinimumWidth(120)
+        self.mode_combo.setMinimumWidth(105)
         self.mode_combo.setMinimumHeight(32)
+        self.mode_combo.setStyleSheet(f"""
+            QComboBox {{
+                padding: 4px 10px;
+                font-size: 13px;
+            }}
+        """)
         self.mode_combo.setEnabled(False)
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
-        layout.addWidget(self.mode_combo)
+        mode_card_layout.addWidget(self.mode_combo)
         
         # PWM duty cycle
         self.pwm_label = QLabel("Duty:")
+        self.pwm_label.setStyleSheet("background: transparent;")
         self.pwm_label.setVisible(False)
-        layout.addWidget(self.pwm_label)
+        mode_card_layout.addWidget(self.pwm_label)
         
         self.pwm_slider = QSlider(Qt.Orientation.Horizontal)
         self.pwm_slider.setRange(0, 15)
         self.pwm_slider.setValue(15)
-        self.pwm_slider.setMinimumWidth(120)
+        self.pwm_slider.setMinimumWidth(100)
         self.pwm_slider.setVisible(False)
         self.pwm_slider.valueChanged.connect(self._on_pwm_changed)
-        layout.addWidget(self.pwm_slider)
+        mode_card_layout.addWidget(self.pwm_slider)
         
         self.pwm_value = QLabel("100%")
-        self.pwm_value.setMinimumWidth(50)
+        self.pwm_value.setMinimumWidth(45)
+        self.pwm_value.setStyleSheet("background: transparent;")
         self.pwm_value.setVisible(False)
-        layout.addWidget(self.pwm_value)
+        mode_card_layout.addWidget(self.pwm_value)
         
+        layout.addWidget(self.mode_card)
         layout.addStretch()
     
     def _on_enable_changed(self, state):
@@ -278,15 +428,15 @@ class DeviceOutputsWidget(QWidget):
         
         # Outputs container
         self.outputs_container = QWidget()
+        self.outputs_container.setStyleSheet("background: transparent;")
         outputs_layout = QVBoxLayout(self.outputs_container)
         outputs_layout.setContentsMargins(0 if not self.show_header else 20, 4, 0, 4)
-        outputs_layout.setSpacing(2)
+        outputs_layout.setSpacing(4)
         
-        # Label for selecting outputs (only when no header)
-        if not self.show_header:
-            outputs_label = QLabel("Select outputs to control:")
-            outputs_label.setStyleSheet(f"color: {COLORS['text_secondary']}; margin-bottom: 4px;")
-            outputs_layout.addWidget(outputs_label)
+        # Label for selecting outputs
+        outputs_label = QLabel("Check the outputs you want to control:")
+        outputs_label.setStyleSheet(f"color: {COLORS['accent_primary']}; font-weight: 700; font-size: 13px; margin-bottom: 8px; background: transparent;")
+        outputs_layout.addWidget(outputs_label)
         
         # Create output widgets
         for i, output_name in enumerate(self.device.outputs):
@@ -407,8 +557,16 @@ class CaseEditor(QWidget):
         self.device_combo.addItem("Select a device...", None)
         for device_id, device in DEVICES.items():
             self.device_combo.addItem(f"{device.name}", device_id)
-        self.device_combo.setMinimumWidth(200)
-        self.device_combo.setMinimumHeight(32)
+        self.device_combo.setMinimumWidth(220)
+        self.device_combo.setMinimumHeight(36)
+        self.device_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         device_row.addWidget(self.device_combo)
         device_row.addStretch()
@@ -439,25 +597,53 @@ class CaseEditor(QWidget):
         
         # Settings row - all in one horizontal layout
         settings_layout = QHBoxLayout()
-        settings_layout.setSpacing(24)
+        settings_layout.setSpacing(16)
         
-        # Mode
-        settings_layout.addWidget(QLabel("Mode:"))
+        # Mode label
+        mode_label = QLabel("Mode:")
+        mode_label.setStyleSheet("background: transparent;")
+        settings_layout.addWidget(mode_label)
+        
+        # Mode dropdown with card
         self.mode_combo = QComboBox()
         self.mode_combo.addItem("Momentary", "momentary")
         self.mode_combo.addItem("Toggle", "toggle")
         self.mode_combo.addItem("Timed", "timed")
-        self.mode_combo.setMinimumWidth(120)
-        self.mode_combo.setMinimumHeight(32)
+        self.mode_combo.setMinimumWidth(130)
+        self.mode_combo.setMinimumHeight(36)
+        self.mode_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
+        self.mode_combo.currentIndexChanged.connect(lambda: self.changed.emit())
         settings_layout.addWidget(self.mode_combo)
         
-        # Pattern
-        settings_layout.addWidget(QLabel("Pattern:"))
+        settings_layout.addSpacing(16)
+        
+        # Pattern label
+        pattern_label = QLabel("Pattern:")
+        pattern_label.setStyleSheet("background: transparent;")
+        settings_layout.addWidget(pattern_label)
+        
+        # Pattern dropdown with card
         self.pattern_combo = QComboBox()
         for key, preset in PATTERN_PRESETS.items():
             self.pattern_combo.addItem(preset['name'], key)
-        self.pattern_combo.setMinimumWidth(150)
-        self.pattern_combo.setMinimumHeight(32)
+        self.pattern_combo.setMinimumWidth(160)
+        self.pattern_combo.setMinimumHeight(36)
+        self.pattern_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
+        self.pattern_combo.currentIndexChanged.connect(lambda: self.changed.emit())
         settings_layout.addWidget(self.pattern_combo)
         
         settings_layout.addStretch()
@@ -474,6 +660,7 @@ class CaseEditor(QWidget):
         must_on_layout.addWidget(must_on_label)
         
         self.must_on_dropdown = MultiSelectDropdown("None selected")
+        self.must_on_dropdown.selection_changed.connect(self.changed)
         must_on_layout.addWidget(self.must_on_dropdown)
         must_on_layout.addStretch()
         conditions_layout.addLayout(must_on_layout)
@@ -485,6 +672,7 @@ class CaseEditor(QWidget):
         must_off_layout.addWidget(must_off_label)
         
         self.must_off_dropdown = MultiSelectDropdown("None selected")
+        self.must_off_dropdown.selection_changed.connect(self.changed)
         must_off_layout.addWidget(self.must_off_dropdown)
         must_off_layout.addStretch()
         conditions_layout.addLayout(must_off_layout)
@@ -568,15 +756,22 @@ class CaseEditor(QWidget):
         config = CaseConfig()
         config.enabled = self.enable_check.isChecked()
         
+        # Save ALL current values regardless of whether they've been "changed"
         config.device_outputs = []
-        for device_id, widget in self.device_widgets.items():
-            if widget.is_enabled():
-                output_configs = widget.get_output_configs()
-                if output_configs:
-                    config.device_outputs.append((device_id, output_configs))
         
+        # Get the currently selected device
+        selected_device_id = self.device_combo.currentData()
+        if selected_device_id and selected_device_id in self.device_widgets:
+            widget = self.device_widgets[selected_device_id]
+            output_configs = widget.get_output_configs()
+            # Save the device with its outputs (even if empty, save empty dict)
+            config.device_outputs.append((selected_device_id, output_configs))
+        
+        # Always save mode and pattern
         config.mode = self.mode_combo.currentData() or 'momentary'
         config.pattern_preset = self.pattern_combo.currentData() or 'none'
+        
+        # Always save conditions
         config.must_be_on = self.must_on_dropdown.get_selected()
         config.must_be_off = self.must_off_dropdown.get_selected()
         
@@ -804,6 +999,10 @@ class InputsPage(QWidget):
         
         splitter.setSizes([280, 720])
         layout.addWidget(splitter)
+        
+        # Auto-select first input (Input 1)
+        if self.input_list.count() > 0:
+            self.input_list.setCurrentRow(0)
     
     def _populate_input_list(self, filter_type: str = "all"):
         self.input_list.clear()
@@ -859,7 +1058,8 @@ class InputsPage(QWidget):
     
     def _on_config_changed(self):
         if self.current_input_number:
-            self.config.inputs[self.current_input_number - 1] = self.config_panel.get_config()
+            config = self.config_panel.get_config()
+            self.config.inputs[self.current_input_number - 1] = config
             self._update_list_item(self.current_input_number)
     
     def _update_list_item(self, input_number: int):
@@ -892,4 +1092,8 @@ class InputsPage(QWidget):
         self.config = config
         self.current_input_number = None
         self._populate_input_list(self.filter_combo.currentData() or "all")
+        
+        # Auto-select first input (Input 1)
+        if self.input_list.count() > 0:
+            self.input_list.setCurrentRow(0)
 

@@ -17,6 +17,15 @@ from config_data import (
     SA_MASTERCELL, PGN_EEPROM_WRITE, PGN_EEPROM_READ, PGN_EEPROM_RESPONSE
 )
 
+# Import EEPROM protocol for advanced operations
+from eeprom_protocol import (
+    WriteOperation, ReadOperation, EEPROMResponse, ResponseStatus,
+    generate_full_config_write_operations, generate_full_config_read_operations,
+    generate_system_read_operations, generate_input_read_operations,
+    CASE_DATA_START, CASE_SIZE, CASES_PER_INPUT, BYTES_PER_INPUT, TOTAL_INPUTS,
+    SystemAddress
+)
+
 # =============================================================================
 # Data Classes
 # =============================================================================
@@ -418,4 +427,270 @@ def parse_j1939_id(can_id: int) -> Tuple[int, int, int]:
         pgn = (dp << 16) | (pf << 8)
     
     return priority, pgn, sa
+
+
+# =============================================================================
+# EEPROM Batch Operations Worker
+# =============================================================================
+
+class EEPROMWorker(QThread):
+    """
+    Background thread for batch EEPROM read/write operations.
+    Handles the request/response protocol with proper timing.
+    """
+    
+    # Signals
+    progress = pyqtSignal(int, int, str)  # current, total, description
+    operation_complete = pyqtSignal(bool, str)  # success, message
+    byte_read = pyqtSignal(int, int)  # address, value
+    byte_written = pyqtSignal(int, bool)  # address, success
+    
+    def __init__(self, can_interface: 'CANInterface', parent=None):
+        super().__init__(parent)
+        self.can_interface = can_interface
+        self.operations: List = []
+        self.is_write = False
+        self.running = False
+        self.read_data: Dict[int, int] = {}  # address -> value
+        
+        # Timing parameters (milliseconds)
+        self.inter_message_delay = 15  # 15ms between messages
+        self.response_timeout = 200  # 200ms timeout for response
+        self.retry_count = 3
+        
+        # Response tracking
+        self._waiting_for_response = False
+        self._response_address = -1
+        self._response_received = False
+        self._response_value = 0
+        self._response_status = 0
+    
+    def set_operations(self, operations: List, is_write: bool = True):
+        """Set the operations to perform"""
+        self.operations = operations
+        self.is_write = is_write
+        self.read_data.clear()
+    
+    def stop(self):
+        """Stop the operation"""
+        self.running = False
+    
+    def on_eeprom_response(self, address: int, value: int, status: int):
+        """Called when EEPROM response is received"""
+        if self._waiting_for_response and address == self._response_address:
+            self._response_value = value
+            self._response_status = status
+            self._response_received = True
+    
+    def run(self):
+        """Execute all operations"""
+        self.running = True
+        total = len(self.operations)
+        
+        if total == 0:
+            self.operation_complete.emit(True, "No operations to perform")
+            return
+        
+        # Connect to EEPROM response signal
+        self.can_interface.worker.eeprom_response.connect(self.on_eeprom_response)
+        
+        try:
+            for i, op in enumerate(self.operations):
+                if not self.running:
+                    self.operation_complete.emit(False, "Operation cancelled")
+                    return
+                
+                # Update progress
+                desc = op.description if hasattr(op, 'description') else f"Address 0x{op.address:04X}"
+                self.progress.emit(i + 1, total, desc)
+                
+                # Perform operation with retry
+                success = False
+                for retry in range(self.retry_count):
+                    if self.is_write:
+                        success = self._do_write(op)
+                    else:
+                        success = self._do_read(op)
+                    
+                    if success:
+                        break
+                    
+                    # Wait before retry
+                    self.msleep(50)
+                
+                if not success:
+                    error_msg = f"Failed at address 0x{op.address:04X} after {self.retry_count} retries"
+                    self.operation_complete.emit(False, error_msg)
+                    return
+                
+                # Inter-message delay
+                self.msleep(self.inter_message_delay)
+            
+            self.operation_complete.emit(True, f"Completed {total} operations")
+        
+        finally:
+            # Disconnect signal
+            try:
+                self.can_interface.worker.eeprom_response.disconnect(self.on_eeprom_response)
+            except:
+                pass
+    
+    def _do_write(self, op: WriteOperation) -> bool:
+        """Perform a single write operation"""
+        self._waiting_for_response = True
+        self._response_address = op.address
+        self._response_received = False
+        
+        # Send write request
+        if not self.can_interface.write_eeprom(op.address, op.value):
+            self._waiting_for_response = False
+            return False
+        
+        # Wait for response
+        start_time = time.time()
+        while not self._response_received:
+            if (time.time() - start_time) * 1000 > self.response_timeout:
+                self._waiting_for_response = False
+                return False
+            self.msleep(5)
+        
+        self._waiting_for_response = False
+        success = self._response_status == EEPROM_STATUS_SUCCESS
+        self.byte_written.emit(op.address, success)
+        return success
+    
+    def _do_read(self, op: ReadOperation) -> bool:
+        """Perform a single read operation"""
+        self._waiting_for_response = True
+        self._response_address = op.address
+        self._response_received = False
+        
+        # Send read request
+        if not self.can_interface.read_eeprom(op.address):
+            self._waiting_for_response = False
+            return False
+        
+        # Wait for response
+        start_time = time.time()
+        while not self._response_received:
+            if (time.time() - start_time) * 1000 > self.response_timeout:
+                self._waiting_for_response = False
+                return False
+            self.msleep(5)
+        
+        self._waiting_for_response = False
+        
+        if self._response_status == EEPROM_STATUS_SUCCESS:
+            self.read_data[op.address] = self._response_value
+            self.byte_read.emit(op.address, self._response_value)
+            return True
+        
+        return False
+
+
+# =============================================================================
+# Configuration Read/Write Manager
+# =============================================================================
+
+class ConfigurationManager(QObject):
+    """
+    High-level manager for reading and writing full device configurations.
+    """
+    
+    # Signals
+    progress = pyqtSignal(int, int, str)  # current, total, description
+    read_complete = pyqtSignal(bool, dict)  # success, data_dict
+    write_complete = pyqtSignal(bool, str)  # success, message
+    
+    def __init__(self, can_interface: CANInterface, parent=None):
+        super().__init__(parent)
+        self.can_interface = can_interface
+        self.worker: Optional[EEPROMWorker] = None
+        self._operation_type = None
+    
+    def read_full_configuration(self):
+        """
+        Start reading the entire device configuration.
+        Emits read_complete when done.
+        """
+        if self.worker and self.worker.isRunning():
+            return
+        
+        # Generate read operations for entire config
+        # Note: This is a LOT of bytes - ~14,000 for full config
+        # For practical use, you may want to read only modified inputs
+        operations = generate_full_config_read_operations()
+        
+        self.worker = EEPROMWorker(self.can_interface)
+        self.worker.set_operations(operations, is_write=False)
+        self.worker.progress.connect(self._on_progress)
+        self.worker.operation_complete.connect(self._on_read_complete)
+        self._operation_type = 'read'
+        self.worker.start()
+    
+    def read_system_config(self):
+        """Read only system configuration (much faster)"""
+        if self.worker and self.worker.isRunning():
+            return
+        
+        operations = generate_system_read_operations()
+        
+        self.worker = EEPROMWorker(self.can_interface)
+        self.worker.set_operations(operations, is_write=False)
+        self.worker.progress.connect(self._on_progress)
+        self.worker.operation_complete.connect(self._on_read_complete)
+        self._operation_type = 'read_system'
+        self.worker.start()
+    
+    def read_input_config(self, input_number: int):
+        """Read configuration for a single input"""
+        if self.worker and self.worker.isRunning():
+            return
+        
+        operations = generate_input_read_operations(input_number)
+        
+        self.worker = EEPROMWorker(self.can_interface)
+        self.worker.set_operations(operations, is_write=False)
+        self.worker.progress.connect(self._on_progress)
+        self.worker.operation_complete.connect(self._on_read_complete)
+        self._operation_type = f'read_input_{input_number}'
+        self.worker.start()
+    
+    def write_configuration(self, config):
+        """
+        Write a FullConfiguration to the device.
+        """
+        if self.worker and self.worker.isRunning():
+            return
+        
+        from config_data import FullConfiguration
+        
+        if not isinstance(config, FullConfiguration):
+            self.write_complete.emit(False, "Invalid configuration object")
+            return
+        
+        operations = generate_full_config_write_operations(config)
+        
+        self.worker = EEPROMWorker(self.can_interface)
+        self.worker.set_operations(operations, is_write=True)
+        self.worker.progress.connect(self._on_progress)
+        self.worker.operation_complete.connect(self._on_write_complete)
+        self._operation_type = 'write'
+        self.worker.start()
+    
+    def cancel(self):
+        """Cancel current operation"""
+        if self.worker:
+            self.worker.stop()
+    
+    def _on_progress(self, current: int, total: int, desc: str):
+        self.progress.emit(current, total, desc)
+    
+    def _on_read_complete(self, success: bool, message: str):
+        if self.worker:
+            data = self.worker.read_data.copy() if success else {}
+            self.read_complete.emit(success, data)
+    
+    def _on_write_complete(self, success: bool, message: str):
+        self.write_complete.emit(success, message)
 

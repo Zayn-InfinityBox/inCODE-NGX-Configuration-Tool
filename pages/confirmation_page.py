@@ -3,15 +3,15 @@ confirmation_page.py - Review and confirm configuration changes
 """
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QFrame, QTreeWidget, QTreeWidgetItem
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QScrollArea, QFrame
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from styles import COLORS, ICONS
+from styles import COLORS
 from config_data import (
-    FullConfiguration, INPUTS, DEVICES, get_input_definition,
+    FullConfiguration, DEVICES, get_input_definition,
     OutputMode
 )
 
@@ -25,71 +25,74 @@ class ConfirmationPage(QWidget):
         self._setup_ui()
     
     def _setup_ui(self):
+        self.setStyleSheet("background: transparent;")
+        
         layout = QVBoxLayout(self)
-        layout.setSpacing(24)
-        layout.setContentsMargins(48, 32, 48, 32)
+        layout.setSpacing(16)
+        layout.setContentsMargins(32, 24, 32, 24)
         
         # Header
         title = QLabel("Review Your Configuration")
         title.setFont(QFont("", 24, QFont.Weight.Bold))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("color: white; background: transparent;")
         layout.addWidget(title)
-        
-        subtitle = QLabel("Please review all changes before writing to the device")
-        subtitle.setStyleSheet(f"color: {COLORS['text_secondary']};")
-        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(subtitle)
         
         # Summary stats
         self.stats_label = QLabel("")
         self.stats_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.stats_label.setStyleSheet(f"""
-            background-color: {COLORS['bg_light']};
-            padding: 12px 24px;
-            border-radius: 8px;
-            color: {COLORS['accent_blue']};
-            font-weight: bold;
+            background-color: rgba(96, 176, 225, 0.2);
+            padding: 10px 24px;
+            border-radius: 12px;
+            color: {COLORS['accent_primary']};
+            font-weight: 600;
+            font-size: 14px;
         """)
-        layout.addWidget(self.stats_label)
+        layout.addWidget(self.stats_label, alignment=Qt.AlignmentFlag.AlignCenter)
         
-        # Tree view of configuration
-        self.config_tree = QTreeWidget()
-        self.config_tree.setHeaderLabels(["Configuration Item", "Details"])
-        self.config_tree.setColumnWidth(0, 400)
-        self.config_tree.setAlternatingRowColors(True)
-        self.config_tree.setStyleSheet(f"""
-            QTreeWidget {{
-                background-color: {COLORS['bg_dark']};
-                alternate-background-color: {COLORS['bg_medium']};
-            }}
-            QTreeWidget::item {{
-                padding: 8px 4px;
-            }}
-        """)
-        layout.addWidget(self.config_tree)
+        # Scroll area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        
+        self.scroll_content = QWidget()
+        self.scroll_content.setStyleSheet("background: transparent;")
+        self.content_layout = QVBoxLayout(self.scroll_content)
+        self.content_layout.setSpacing(12)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        
+        scroll.setWidget(self.scroll_content)
+        layout.addWidget(scroll, 1)
         
         # Warning note
         warning = QLabel(
-            "⚠️  The current MASTERCELL configuration will be backed up before any changes are written."
+            "⚠  The current MASTERCELL configuration will be backed up before any changes are written."
         )
         warning.setStyleSheet(f"""
-            color: {COLORS['accent_yellow']};
-            background-color: {COLORS['bg_light']};
-            padding: 12px;
+            color: {COLORS['warning']};
+            background-color: rgba(245, 158, 11, 0.15);
+            padding: 12px 16px;
             border-radius: 8px;
+            font-size: 13px;
         """)
         warning.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(warning)
     
     def refresh(self):
         """Refresh the configuration display"""
-        self.config_tree.clear()
+        # Clear existing content
+        while self.content_layout.count():
+            item = self.content_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
         
         configured_inputs = 0
         total_cases = 0
+        total_outputs = 0
         
         for input_config in self.config.inputs:
-            # Count enabled cases
             on_cases = [c for c in input_config.on_cases if c.enabled]
             off_cases = [c for c in input_config.off_cases if c.enabled]
             
@@ -103,107 +106,145 @@ class ConfirmationPage(QWidget):
             if not input_def:
                 continue
             
-            # Create input tree item
+            # Create input section
             display_name = input_config.custom_name if input_config.custom_name else input_def.name
-            input_item = QTreeWidgetItem([
-                f"{ICONS['input_configured']} Input {input_config.input_number}: {display_name}",
-                f"{len(on_cases)} ON, {len(off_cases)} OFF cases"
-            ])
-            input_item.setFont(0, QFont("", 11, QFont.Weight.Bold))
             
-            # Add ON cases
+            # Input header card
+            input_card = QFrame()
+            input_card.setStyleSheet(f"""
+                QFrame {{
+                    background-color: rgba(60, 60, 60, 0.95);
+                    border-radius: 10px;
+                }}
+            """)
+            input_layout = QVBoxLayout(input_card)
+            input_layout.setSpacing(10)
+            input_layout.setContentsMargins(16, 14, 16, 14)
+            
+            # Input title
+            input_title = QLabel(f"IN{input_config.input_number:02d}: {display_name}")
+            input_title.setFont(QFont("", 14, QFont.Weight.Bold))
+            input_title.setStyleSheet(f"color: {COLORS['accent_primary']}; background: transparent;")
+            input_layout.addWidget(input_title)
+            
+            # ON cases
             for i, case in enumerate(on_cases):
-                case_item = QTreeWidgetItem([
-                    f"  {ICONS['arrow_right']} ON Case {i + 1}",
-                    self._get_case_summary(case)
-                ])
-                case_item.setForeground(0, Qt.GlobalColor.green)
-                
-                # Add device outputs
-                for device_id, outputs in case.device_outputs:
-                    if device_id in DEVICES:
-                        device = DEVICES[device_id]
-                        output_text = self._get_outputs_text(outputs)
-                        device_item = QTreeWidgetItem([
-                            f"      {device.name}",
-                            output_text
-                        ])
-                        case_item.addChild(device_item)
-                
-                input_item.addChild(case_item)
+                case_frame = self._create_case_frame(f"ON Case {i+1}", case, "#22C55E")
+                input_layout.addWidget(case_frame)
+                for _, outputs in case.device_outputs:
+                    total_outputs += len(outputs)
             
-            # Add OFF cases
+            # OFF cases  
             for i, case in enumerate(off_cases):
-                case_item = QTreeWidgetItem([
-                    f"  {ICONS['arrow_right']} OFF Case {i + 1}",
-                    self._get_case_summary(case)
-                ])
-                case_item.setForeground(0, Qt.GlobalColor.red)
-                
-                for device_id, outputs in case.device_outputs:
-                    if device_id in DEVICES:
-                        device = DEVICES[device_id]
-                        output_text = self._get_outputs_text(outputs)
-                        device_item = QTreeWidgetItem([
-                            f"      {device.name}",
-                            output_text
-                        ])
-                        case_item.addChild(device_item)
-                
-                input_item.addChild(case_item)
+                case_frame = self._create_case_frame(f"OFF Case {i+1}", case, "#EF4444")
+                input_layout.addWidget(case_frame)
+                for _, outputs in case.device_outputs:
+                    total_outputs += len(outputs)
             
-            self.config_tree.addTopLevelItem(input_item)
-            input_item.setExpanded(True)
+            self.content_layout.addWidget(input_card)
         
         # Update stats
         self.stats_label.setText(
-            f"📊  {configured_inputs} inputs configured  •  {total_cases} total cases"
+            f"{configured_inputs} inputs  •  {total_cases} cases  •  {total_outputs} outputs"
         )
         
         if configured_inputs == 0:
-            empty_item = QTreeWidgetItem([
-                "No inputs configured",
-                "Go back and configure at least one input"
-            ])
-            empty_item.setForeground(0, Qt.GlobalColor.gray)
-            self.config_tree.addTopLevelItem(empty_item)
-    
-    def _get_case_summary(self, case) -> str:
-        """Get a text summary of case behavior"""
-        parts = []
+            empty_label = QLabel("No inputs configured yet\n\nGo back to the Configure page and enable at least one case")
+            empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            empty_label.setStyleSheet("color: #888; font-size: 15px; padding: 60px 20px;")
+            self.content_layout.addWidget(empty_label)
         
-        if case.mode == 'toggle':
-            parts.append("Toggle")
-        elif case.mode == 'timed':
-            parts.append("Timed")
+        self.content_layout.addStretch()
+    
+    def _create_case_frame(self, case_name: str, case, color: str) -> QFrame:
+        """Create a frame showing all case details"""
+        frame = QFrame()
+        frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(45, 45, 45, 0.95);
+                border-left: 3px solid {color};
+                border-radius: 6px;
+                margin-left: 8px;
+            }}
+        """)
+        
+        layout = QVBoxLayout(frame)
+        layout.setSpacing(6)
+        layout.setContentsMargins(12, 10, 12, 10)
+        
+        # Case header
+        header = QHBoxLayout()
+        
+        name_label = QLabel(case_name)
+        name_label.setFont(QFont("", 12, QFont.Weight.Bold))
+        name_label.setStyleSheet(f"color: {color}; background: transparent;")
+        header.addWidget(name_label)
+        
+        # Mode
+        mode_text = {"momentary": "Momentary", "toggle": "Toggle", "timed": "Timed"}.get(case.mode, "Momentary")
+        mode_label = QLabel(f"[{mode_text}]")
+        mode_label.setStyleSheet("color: #AAA; background: transparent;")
+        header.addWidget(mode_label)
+        
+        header.addStretch()
+        layout.addLayout(header)
+        
+        # Details section
+        details = []
+        
+        # Device & Outputs
+        if case.device_outputs:
+            for device_id, outputs in case.device_outputs:
+                if device_id in DEVICES:
+                    device = DEVICES[device_id]
+                    if outputs:
+                        output_parts = []
+                        for out_num, out_config in sorted(outputs.items()):
+                            mode_str = "Track"
+                            if out_config.mode == OutputMode.SOFT_START:
+                                mode_str = "Soft-Start"
+                            elif out_config.mode == OutputMode.PWM:
+                                pct = int((out_config.pwm_duty / 15) * 100)
+                                mode_str = f"PWM {pct}%"
+                            output_parts.append(f"Out{out_num}={mode_str}")
+                        details.append(f"<span style='color: {COLORS['accent_blue']};'>Device:</span> {device.name} → {', '.join(output_parts)}")
+                    else:
+                        details.append(f"<span style='color: {COLORS['accent_blue']};'>Device:</span> {device.name} <span style='color: {COLORS['warning']};'>(no outputs selected)</span>")
         else:
-            parts.append("Momentary")
+            details.append(f"<span style='color: {COLORS['warning']};'>⚠ No device selected</span>")
         
+        # Pattern
         if case.pattern_preset and case.pattern_preset != 'none':
-            parts.append(f"Pattern: {case.pattern_preset}")
+            pattern_name = case.pattern_preset.replace('_', ' ').title()
+            details.append(f"<span style='color: {COLORS['accent_purple']};'>Pattern:</span> {pattern_name}")
         
-        if case.set_ignition:
-            parts.append("Sets Ignition")
+        # Must be ON
+        if case.must_be_on:
+            names = []
+            for n in case.must_be_on:
+                inp = get_input_definition(n)
+                names.append(f"IN{n:02d}" + (f" ({inp.name})" if inp else ""))
+            details.append(f"<span style='color: #22C55E;'>Must be ON:</span> {', '.join(names)}")
         
-        return " | ".join(parts) if parts else "Default behavior"
-    
-    def _get_outputs_text(self, outputs: dict) -> str:
-        """Get a text description of output configurations"""
-        parts = []
+        # Must be OFF
+        if case.must_be_off:
+            names = []
+            for n in case.must_be_off:
+                inp = get_input_definition(n)
+                names.append(f"IN{n:02d}" + (f" ({inp.name})" if inp else ""))
+            details.append(f"<span style='color: #F87171;'>Must be OFF:</span> {', '.join(names)}")
         
-        for out_num, config in sorted(outputs.items()):
-            if config.mode == OutputMode.TRACK:
-                parts.append(f"Out{out_num}:Track")
-            elif config.mode == OutputMode.SOFT_START:
-                parts.append(f"Out{out_num}:SoftStart")
-            elif config.mode == OutputMode.PWM:
-                percent = int((config.pwm_duty / 15) * 100)
-                parts.append(f"Out{out_num}:PWM@{percent}%")
+        # Add all details
+        for detail in details:
+            label = QLabel(detail)
+            label.setTextFormat(Qt.TextFormat.RichText)
+            label.setStyleSheet("color: white; background: transparent; padding-left: 8px;")
+            label.setWordWrap(True)
+            layout.addWidget(label)
         
-        return ", ".join(parts) if parts else "No outputs"
+        return frame
     
     def set_configuration(self, config: FullConfiguration):
         """Update the configuration reference"""
         self.config = config
         self.refresh()
-

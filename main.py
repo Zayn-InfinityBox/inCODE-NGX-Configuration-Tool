@@ -6,15 +6,16 @@ Single-page wizard application for MASTERCELL configuration
 import sys
 import os
 from datetime import datetime
+
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QStackedWidget, QLabel, QPushButton, QFrame, QProgressBar,
-    QMessageBox
+    QMessageBox, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QPixmap, QColor, QPalette, QLinearGradient, QPainter
 
-from styles import MAIN_STYLESHEET, COLORS, ICONS
+from styles import MAIN_STYLESHEET, COLORS, ICONS, BACKGROUND_GRADIENT
 from can_interface import CANInterface
 from config_data import FullConfiguration
 
@@ -27,7 +28,7 @@ from pages.write_page import WritePage
 
 
 class WizardNavigation(QWidget):
-    """Bottom navigation bar for wizard"""
+    """Bottom navigation bar for wizard - glass style"""
     
     back_clicked = pyqtSignal()
     next_clicked = pyqtSignal()
@@ -38,25 +39,66 @@ class WizardNavigation(QWidget):
     
     def _setup_ui(self):
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(24, 16, 24, 16)
+        layout.setContentsMargins(32, 20, 32, 20)
         
         self.back_btn = QPushButton("← Back")
-        self.back_btn.setMinimumWidth(120)
+        self.back_btn.setMinimumWidth(140)
+        self.back_btn.setMinimumHeight(48)
+        self.back_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: rgba(70, 70, 70, 0.9);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_primary']};
+            }}
+            QPushButton:disabled {{
+                background-color: rgba(50, 50, 50, 0.7);
+                color: rgba(255, 255, 255, 0.45);
+            }}
+        """)
         self.back_btn.clicked.connect(self.back_clicked.emit)
         layout.addWidget(self.back_btn)
         
         layout.addStretch()
         
-        # Step indicator
+        # Step indicator with pill style
         self.step_label = QLabel("Step 1 of 5")
-        self.step_label.setStyleSheet(f"color: {COLORS['text_secondary']};")
+        self.step_label.setStyleSheet(f"""
+            color: {COLORS['text_secondary']};
+            background-color: rgba(50, 50, 50, 0.8);
+            padding: 8px 20px;
+            border-radius: 16px;
+            font-size: 13px;
+        """)
         layout.addWidget(self.step_label)
         
         layout.addStretch()
         
         self.next_btn = QPushButton("Next →")
-        self.next_btn.setMinimumWidth(120)
-        self.next_btn.setObjectName("primaryButton")
+        self.next_btn.setMinimumWidth(160)
+        self.next_btn.setMinimumHeight(48)
+        self.next_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['accent_primary']};
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 700;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_secondary']};
+            }}
+            QPushButton:disabled {{
+                background-color: rgba(107, 197, 248, 0.35);
+                color: rgba(255, 255, 255, 0.55);
+            }}
+        """)
         self.next_btn.clicked.connect(self.next_clicked.emit)
         layout.addWidget(self.next_btn)
     
@@ -72,30 +114,33 @@ class WizardNavigation(QWidget):
 
 
 class StepIndicator(QWidget):
-    """Visual step indicator at top of wizard"""
+    """Visual step indicator at top of wizard - glass style"""
     
     def __init__(self, steps: list, parent=None):
         super().__init__(parent)
         self.steps = steps
         self.current_step = 0
         self.step_labels = []
+        self.connectors = []
         self._setup_ui()
     
     def _setup_ui(self):
+        self.setStyleSheet("background-color: transparent;")
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(24, 16, 24, 16)
+        layout.setContentsMargins(48, 24, 48, 24)
         layout.setSpacing(0)
         
         for i, step_name in enumerate(self.steps):
             # Step container
             step_widget = QWidget()
+            step_widget.setStyleSheet("background-color: transparent;")
             step_layout = QVBoxLayout(step_widget)
-            step_layout.setSpacing(4)
+            step_layout.setSpacing(8)
             step_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
             
-            # Circle with number
+            # Circle with number - larger for better visibility
             circle = QLabel(str(i + 1))
-            circle.setFixedSize(32, 32)
+            circle.setFixedSize(40, 40)
             circle.setAlignment(Qt.AlignmentFlag.AlignCenter)
             circle.setObjectName(f"stepCircle_{i}")
             step_layout.addWidget(circle, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -104,7 +149,6 @@ class StepIndicator(QWidget):
             label = QLabel(step_name)
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             label.setObjectName(f"stepLabel_{i}")
-            label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
             step_layout.addWidget(label)
             
             self.step_labels.append((circle, label))
@@ -114,8 +158,9 @@ class StepIndicator(QWidget):
             if i < len(self.steps) - 1:
                 line = QFrame()
                 line.setFrameShape(QFrame.Shape.HLine)
-                line.setFixedHeight(2)
-                line.setStyleSheet(f"background-color: {COLORS['border_default']};")
+                line.setFixedHeight(3)
+                line.setStyleSheet("background-color: rgba(255, 255, 255, 0.1); border-radius: 1px;")
+                self.connectors.append(line)
                 layout.addWidget(line, 1)
         
         self._update_styles()
@@ -127,31 +172,51 @@ class StepIndicator(QWidget):
     def _update_styles(self):
         for i, (circle, label) in enumerate(self.step_labels):
             if i < self.current_step:
-                # Completed
+                # Completed - green with check
+                circle.setText("✓")
                 circle.setStyleSheet(f"""
-                    background-color: {COLORS['accent_green']};
-                    color: white;
-                    border-radius: 16px;
-                    font-weight: bold;
+                    QLabel {{
+                        background-color: {COLORS['success']};
+                        color: white;
+                        border-radius: 20px;
+                        font-weight: bold;
+                        font-size: 16px;
+                    }}
                 """)
-                label.setStyleSheet(f"color: {COLORS['accent_green']}; font-size: 11px;")
+                label.setStyleSheet(f"QLabel {{ color: {COLORS['success']}; background: transparent; font-size: 12px; font-weight: 600; }}")
             elif i == self.current_step:
-                # Current
+                # Current - accent color
+                circle.setText(str(i + 1))
                 circle.setStyleSheet(f"""
-                    background-color: {COLORS['accent_blue']};
-                    color: white;
-                    border-radius: 16px;
-                    font-weight: bold;
+                    QLabel {{
+                        background-color: {COLORS['accent_primary']};
+                        color: white;
+                        border-radius: 20px;
+                        font-weight: bold;
+                        font-size: 16px;
+                    }}
                 """)
-                label.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 11px; font-weight: bold;")
+                label.setStyleSheet(f"QLabel {{ color: white; background: transparent; font-size: 12px; font-weight: 700; }}")
             else:
-                # Future
+                # Future - muted
+                circle.setText(str(i + 1))
                 circle.setStyleSheet(f"""
-                    background-color: {COLORS['bg_lighter']};
-                    color: {COLORS['text_muted']};
-                    border-radius: 16px;
+                    QLabel {{
+                        background-color: rgba(60, 60, 60, 0.8);
+                        color: rgba(255,255,255,0.5);
+                        border-radius: 20px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        font-size: 14px;
+                    }}
                 """)
-                label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+                label.setStyleSheet(f"QLabel {{ color: rgba(255,255,255,0.5); background: transparent; font-size: 12px; }}")
+        
+        # Update connector lines
+        for i, line in enumerate(self.connectors):
+            if i < self.current_step:
+                line.setStyleSheet(f"background-color: {COLORS['success']}; border-radius: 1px;")
+            else:
+                line.setStyleSheet("background-color: rgba(255, 255, 255, 0.1); border-radius: 1px;")
 
 
 class MainWindow(QMainWindow):
@@ -193,21 +258,49 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Header with logo and title
+        # Header with glass effect
         header = QWidget()
-        header.setStyleSheet(f"background-color: {COLORS['bg_medium']}; border-bottom: 1px solid {COLORS['border_default']};")
+        header.setStyleSheet(f"""
+            background-color: rgba(25, 25, 25, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        """)
         header_layout = QHBoxLayout(header)
-        header_layout.setContentsMargins(24, 16, 24, 16)
+        header_layout.setContentsMargins(32, 20, 32, 20)
         
-        title = QLabel("inCODE NGX Configuration Tool")
-        title.setFont(QFont("", 20, QFont.Weight.Bold))
+        # App title (left side)
+        title = QLabel("inCODE NGX")
+        title.setFont(QFont("", 24, QFont.Weight.Bold))
+        title.setStyleSheet(f"color: {COLORS['text_primary']};")
         header_layout.addWidget(title)
+        
+        # Subtitle
+        subtitle = QLabel("Configuration Tool")
+        subtitle.setFont(QFont("", 14))
+        subtitle.setStyleSheet(f"color: {COLORS['text_secondary']}; margin-left: 12px;")
+        header_layout.addWidget(subtitle)
         
         header_layout.addStretch()
         
-        version_label = QLabel("v0.1.0-alpha.1")
-        version_label.setStyleSheet(f"color: {COLORS['text_muted']};")
-        header_layout.addWidget(version_label)
+        # Right side - Logo and Infinitybox branding
+        logo_container = QWidget()
+        logo_container.setStyleSheet("background: transparent;")
+        logo_layout = QHBoxLayout(logo_container)
+        logo_layout.setContentsMargins(0, 0, 0, 0)
+        logo_layout.setSpacing(16)
+        
+        # Large logo icon
+        logo_icon = QLabel("⬡")
+        logo_icon.setFont(QFont("", 52))
+        logo_icon.setStyleSheet(f"color: {COLORS['accent_primary']}; background: transparent;")
+        logo_layout.addWidget(logo_icon)
+        
+        # Infinitybox text
+        brand_name = QLabel("Infinitybox")
+        brand_name.setFont(QFont("", 24, QFont.Weight.Bold))
+        brand_name.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent;")
+        logo_layout.addWidget(brand_name)
+        
+        header_layout.addWidget(logo_container)
         
         main_layout.addWidget(header)
         
@@ -240,9 +333,12 @@ class MainWindow(QMainWindow):
         
         main_layout.addWidget(self.pages, 1)
         
-        # Bottom navigation
+        # Bottom navigation with glass effect
         self.nav = WizardNavigation()
-        self.nav.setStyleSheet(f"background-color: {COLORS['bg_medium']}; border-top: 1px solid {COLORS['border_default']};")
+        self.nav.setStyleSheet(f"""
+            background-color: rgba(25, 25, 25, 0.85);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        """)
         main_layout.addWidget(self.nav)
         
         # Apply stylesheet
@@ -335,6 +431,8 @@ class MainWindow(QMainWindow):
         self.configuration = FullConfiguration()
         self.welcome_page.reset()
         self.inputs_page.set_configuration(self.configuration)
+        self.confirmation_page.set_configuration(self.configuration)
+        self.write_page.set_configuration(self.configuration)  # Update write page too!
         self.write_page.reset()
         self.pages.setCurrentIndex(0)
         self._update_navigation()
@@ -343,6 +441,8 @@ class MainWindow(QMainWindow):
         """Handle configuration loaded from file or preset"""
         self.configuration = config
         self.inputs_page.set_configuration(config)
+        self.confirmation_page.set_configuration(config)
+        self.write_page.set_configuration(config)  # Update write page too!
     
     def _on_connection_changed(self, connected: bool):
         """Handle connection state change"""
@@ -359,8 +459,13 @@ class MainWindow(QMainWindow):
 
 
 def main():
+    # Set high DPI policy before creating app
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+    )
+    
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")
+    app.setStyle("Fusion")  # Fusion gives consistent cross-platform look
     
     window = MainWindow()
     window.show()

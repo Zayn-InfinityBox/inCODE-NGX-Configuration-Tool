@@ -1,5 +1,5 @@
 """
-connection_page.py - Device connection page
+connection_page.py - Device connection page with clean glass design
 """
 
 from PyQt6.QtWidgets import (
@@ -30,147 +30,266 @@ class ConnectionPage(QWidget):
     
     def _setup_ui(self):
         layout = QHBoxLayout(self)
-        layout.setSpacing(32)
-        layout.setContentsMargins(32, 24, 32, 24)
+        layout.setSpacing(24)
+        layout.setContentsMargins(40, 24, 40, 24)
         
-        # Left side - Connection controls
+        # === LEFT PANEL - Connection controls ===
         left_panel = QWidget()
+        left_panel.setStyleSheet("""
+            QWidget {
+                background-color: rgba(55, 55, 55, 0.85);
+                border: none;
+                border-radius: 16px;
+            }
+        """)
         left_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setSpacing(16)
-        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(12)
+        left_layout.setContentsMargins(28, 28, 28, 28)
         
         # Title
-        title = QLabel("Connect Your GridConnect Device")
-        title.setFont(QFont("", 22, QFont.Weight.Bold))
+        title = QLabel("Connect Your Device")
+        title.setFont(QFont("Arial", 22, QFont.Weight.Bold))
+        title.setStyleSheet("color: white; background: transparent; border: none;")
         left_layout.addWidget(title)
         
-        subtitle = QLabel("Plug in your CANUSB COM FD and select it below")
-        subtitle.setStyleSheet(f"color: {COLORS['text_secondary']};")
+        subtitle = QLabel("Plug in your GridConnect CANUSB COM FD")
+        subtitle.setStyleSheet("color: rgba(255,255,255,0.85); background: transparent; border: none; font-size: 13px;")
         left_layout.addWidget(subtitle)
         
-        # Port selection row
-        port_label = QLabel("Serial Port:")
-        port_label.setFont(QFont("", 12, QFont.Weight.Bold))
+        left_layout.addSpacing(12)
+        
+        # Port selection label
+        port_label = QLabel("Serial Port")
+        port_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        port_label.setStyleSheet("color: white; background: transparent; border: none;")
         left_layout.addWidget(port_label)
         
-        port_layout = QHBoxLayout()
-        port_layout.setSpacing(12)
+        # Port selection row
+        port_row = QHBoxLayout()
+        port_row.setSpacing(10)
         
         self.port_combo = QComboBox()
-        self.port_combo.setMinimumHeight(40)
-        port_layout.addWidget(self.port_combo, 1)
+        self.port_combo.setMinimumHeight(44)
+        self.port_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(30, 30, 30, 0.95);
+                border: none;
+                border-radius: 8px;
+                padding: 10px 14px;
+                font-size: 13px;
+                color: white;
+            }}
+            QComboBox:hover {{
+                background-color: rgba(40, 40, 40, 0.95);
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 28px;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 6px solid rgba(255,255,255,0.6);
+                margin-right: 8px;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: rgba(45, 45, 45, 0.98);
+                border: none;
+                border-radius: 8px;
+                selection-background-color: {COLORS['accent_primary']};
+                color: white;
+            }}
+        """)
+        port_row.addWidget(self.port_combo, 1)
         
         self.refresh_btn = QPushButton("Refresh")
-        self.refresh_btn.setMinimumHeight(40)
         self.refresh_btn.setMinimumWidth(80)
+        self.refresh_btn.setMinimumHeight(44)
+        self.refresh_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: rgba(70, 70, 70, 0.9);
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 12px;
+                padding: 8px 12px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_primary']};
+            }}
+        """)
         self.refresh_btn.clicked.connect(self._refresh_ports)
-        port_layout.addWidget(self.refresh_btn)
+        port_row.addWidget(self.refresh_btn)
         
-        left_layout.addLayout(port_layout)
+        left_layout.addLayout(port_row)
         
-        # Status row
-        status_layout = QHBoxLayout()
-        status_layout.setSpacing(12)
+        left_layout.addSpacing(8)
+        
+        # Status display - simple horizontal layout
+        status_container = QWidget()
+        status_container.setStyleSheet("""
+            QWidget {
+                background-color: rgba(35, 35, 35, 0.9);
+                border: none;
+                border-radius: 10px;
+            }
+        """)
+        status_h = QHBoxLayout(status_container)
+        status_h.setContentsMargins(16, 14, 16, 14)
+        status_h.setSpacing(12)
         
         self.status_icon = QLabel(ICONS['disconnected'])
-        self.status_icon.setFont(QFont("", 24))
-        self.status_icon.setStyleSheet(f"color: {COLORS['text_muted']};")
-        status_layout.addWidget(self.status_icon)
+        self.status_icon.setFont(QFont("Arial", 24))
+        self.status_icon.setStyleSheet("color: rgba(180,180,180,1.0); background: transparent; border: none;")
+        self.status_icon.setFixedWidth(36)
+        status_h.addWidget(self.status_icon)
         
-        status_text_layout = QVBoxLayout()
-        status_text_layout.setSpacing(2)
+        status_text_container = QWidget()
+        status_text_container.setStyleSheet("background: transparent; border: none;")
+        status_v = QVBoxLayout(status_text_container)
+        status_v.setContentsMargins(0, 0, 0, 0)
+        status_v.setSpacing(2)
+        
         self.status_label = QLabel("Not connected")
-        self.status_label.setFont(QFont("", 13, QFont.Weight.Bold))
-        self.status_label.setStyleSheet(f"color: {COLORS['text_muted']};")
-        status_text_layout.addWidget(self.status_label)
+        self.status_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        self.status_label.setStyleSheet("color: rgba(180,180,180,1.0); background: transparent; border: none;")
+        status_v.addWidget(self.status_label)
         
         self.status_detail = QLabel("Select a port and click Connect")
-        self.status_detail.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
-        status_text_layout.addWidget(self.status_detail)
+        self.status_detail.setStyleSheet("color: rgba(200,200,200,1.0); font-size: 12px; background: transparent; border: none;")
+        status_v.addWidget(self.status_detail)
         
-        status_layout.addLayout(status_text_layout)
-        status_layout.addStretch()
-        left_layout.addLayout(status_layout)
+        status_h.addWidget(status_text_container, 1)
+        left_layout.addWidget(status_container)
+        
+        left_layout.addSpacing(8)
         
         # Connect button
         self.connect_btn = QPushButton("Connect")
-        self.connect_btn.setObjectName("primaryButton")
-        self.connect_btn.setMinimumHeight(48)
-        self.connect_btn.setFont(QFont("", 13, QFont.Weight.Bold))
+        self.connect_btn.setMinimumHeight(50)
+        self.connect_btn.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        self.connect_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['accent_primary']};
+                color: white;
+                border: none;
+                border-radius: 10px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_secondary']};
+            }}
+            QPushButton:disabled {{
+                background-color: rgba(96, 176, 225, 0.4);
+            }}
+        """)
         self.connect_btn.clicked.connect(self._toggle_connection)
         left_layout.addWidget(self.connect_btn)
         
-        # Separator
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setFixedHeight(1)
-        sep.setStyleSheet(f"background-color: {COLORS['border_default']};")
-        left_layout.addWidget(sep)
+        # Separator line
+        separator = QFrame()
+        separator.setFixedHeight(1)
+        separator.setStyleSheet("background-color: rgba(255,255,255,0.1); border: none;")
+        left_layout.addSpacing(12)
+        left_layout.addWidget(separator)
+        left_layout.addSpacing(12)
         
         # First-time setup section
         setup_title = QLabel("First-Time Device Setup")
-        setup_title.setFont(QFont("", 12, QFont.Weight.Bold))
+        setup_title.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        setup_title.setStyleSheet("color: white; background: transparent; border: none;")
         left_layout.addWidget(setup_title)
         
         setup_desc = QLabel(
-            "New device? Configure it for by pressing the configure button on the device for 3 seconds then click the button below."
+            "New device? Press the configure button on device for 3 seconds, then click below."
         )
         setup_desc.setWordWrap(True)
-        setup_desc.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
+        setup_desc.setStyleSheet("color: rgba(200,200,200,1.0); font-size: 12px; background: transparent; border: none; line-height: 1.4;")
         left_layout.addWidget(setup_desc)
         
-        self.setup_btn = QPushButton("Configure")
-        self.setup_btn.setMinimumHeight(36)
+        left_layout.addSpacing(6)
+        
+        self.setup_btn = QPushButton("Configure for 250kbps")
+        self.setup_btn.setMinimumHeight(42)
+        self.setup_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: rgba(70, 70, 70, 0.9);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_primary']};
+            }}
+        """)
         self.setup_btn.clicked.connect(self._run_first_time_setup)
         left_layout.addWidget(self.setup_btn)
         
         self.setup_status = QLabel("")
-        self.setup_status.setStyleSheet(f"color: {COLORS['accent_green']}; font-size: 11px;")
+        self.setup_status.setStyleSheet(f"color: {COLORS['success']}; font-size: 12px; background: transparent; border: none;")
+        self.setup_status.setMinimumHeight(20)
         left_layout.addWidget(self.setup_status)
         
         left_layout.addStretch()
         layout.addWidget(left_panel)
         
-        # Right side - Instructions and traffic log
+        # === RIGHT PANEL - Instructions and traffic log ===
         right_panel = QWidget()
+        right_panel.setStyleSheet("""
+            QWidget {
+                background-color: rgba(55, 55, 55, 0.85);
+                border: none;
+                border-radius: 16px;
+            }
+        """)
         right_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         right_layout = QVBoxLayout(right_panel)
-        right_layout.setSpacing(12)
-        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(10)
+        right_layout.setContentsMargins(28, 28, 28, 28)
         
-        # Instructions
+        # Instructions title
         instructions_label = QLabel("Setup Instructions")
-        instructions_label.setFont(QFont("", 14, QFont.Weight.Bold))
+        instructions_label.setFont(QFont("Arial", 16, QFont.Weight.Bold))
+        instructions_label.setStyleSheet("color: white; background: transparent; border: none;")
         right_layout.addWidget(instructions_label)
         
+        # Steps - simple list
         steps = [
-            "1. Connect the GridConnect CANUSB COM FD to your computer via USB",
-            "2. Connect the DB9 end to your MASTERCELL's CAN network",
+            "1. Connect the GridConnect CANUSB COM FD via USB",
+            "2. Connect DB9 to your MASTERCELL's CAN network",
             "3. Ensure MASTERCELL is powered on",
-            "4. Select the port (usually /dev/cu.usbserial-... on Mac)",
+            "4. Select the port (usually /dev/cu.usbserial-...)",
             "5. Click Connect to establish communication",
         ]
         
         for step in steps:
             step_label = QLabel(step)
-            step_label.setStyleSheet(f"color: {COLORS['text_secondary']}; padding-left: 8px;")
+            step_label.setStyleSheet("color: rgba(210,210,210,1.0); font-size: 12px; background: transparent; border: none; padding: 4px 0;")
             step_label.setWordWrap(True)
             right_layout.addWidget(step_label)
         
-        right_layout.addSpacing(8)
+        right_layout.addSpacing(12)
         
-        # Traffic log
+        # Traffic log title
         log_label = QLabel("CAN Traffic")
-        log_label.setFont(QFont("", 14, QFont.Weight.Bold))
+        log_label.setFont(QFont("Arial", 13, QFont.Weight.Bold))
+        log_label.setStyleSheet("color: white; background: transparent; border: none;")
         right_layout.addWidget(log_label)
         
+        # Traffic log
         self.traffic_log = QTextEdit()
         self.traffic_log.setReadOnly(True)
         self.traffic_log.setStyleSheet(f"""
             QTextEdit {{
+                background-color: rgba(25, 25, 25, 0.95);
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
                 font-family: 'Monaco', 'Consolas', monospace;
                 font-size: 11px;
+                color: rgba(255,255,255,0.7);
             }}
         """)
         self.traffic_log.setPlaceholderText("CAN traffic will appear here when connected...")
@@ -219,25 +338,42 @@ class ConnectionPage(QWidget):
         """Handle connection state change"""
         if connected:
             self.status_icon.setText(ICONS['connected'])
-            self.status_icon.setStyleSheet(f"color: {COLORS['accent_green']};")
+            self.status_icon.setStyleSheet(f"color: {COLORS['success']}; background: transparent; border: none;")
             self.status_label.setText("Connected")
-            self.status_label.setStyleSheet(f"color: {COLORS['accent_green']};")
-            self.status_detail.setText("Receiving CAN traffic - Click Next to continue")
+            self.status_label.setStyleSheet(f"color: {COLORS['success']}; background: transparent; border: none;")
+            self.status_detail.setText("Receiving CAN traffic")
             self.connect_btn.setText("Disconnect")
-            self.connect_btn.setObjectName("dangerButton")
+            self.connect_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLORS['danger']};
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                }}
+                QPushButton:hover {{
+                    background-color: #dc2626;
+                }}
+            """)
             self.traffic_log.clear()
             self.traffic_log.append("Connected! Waiting for CAN traffic...")
         else:
             self.status_icon.setText(ICONS['disconnected'])
-            self.status_icon.setStyleSheet(f"color: {COLORS['text_muted']};")
+            self.status_icon.setStyleSheet("color: rgba(180,180,180,1.0); background: transparent; border: none;")
             self.status_label.setText("Not connected")
-            self.status_label.setStyleSheet(f"color: {COLORS['text_muted']};")
+            self.status_label.setStyleSheet("color: rgba(180,180,180,1.0); background: transparent; border: none;")
             self.status_detail.setText("Select a port and click Connect")
             self.connect_btn.setText("Connect")
-            self.connect_btn.setObjectName("primaryButton")
-        
-        self.connect_btn.style().unpolish(self.connect_btn)
-        self.connect_btn.style().polish(self.connect_btn)
+            self.connect_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLORS['accent_primary']};
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                }}
+                QPushButton:hover {{
+                    background-color: {COLORS['accent_secondary']};
+                }}
+            """)
         
         self.connection_changed.emit(connected)
     
@@ -272,7 +408,7 @@ class ConnectionPage(QWidget):
             return
         
         self.setup_status.setText("Configuring device...")
-        self.setup_status.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+        self.setup_status.setStyleSheet("color: rgba(255,255,255,0.5); font-size: 12px; background: transparent; border: none;")
         self.setup_btn.setEnabled(False)
         
         try:
@@ -293,8 +429,8 @@ class ConnectionPage(QWidget):
             
             ser.close()
             
-            self.setup_status.setText("Setup complete! Release CONFIG button and click Connect.")
-            self.setup_status.setStyleSheet(f"color: {COLORS['accent_green']}; font-size: 11px;")
+            self.setup_status.setText("✓ Setup complete! Click Connect to continue.")
+            self.setup_status.setStyleSheet(f"color: {COLORS['success']}; font-size: 12px; background: transparent; border: none;")
             
             QMessageBox.information(self, "Setup Complete",
                 "Device configured successfully!\n\n"
@@ -302,7 +438,7 @@ class ConnectionPage(QWidget):
             
         except Exception as e:
             self.setup_status.setText(f"Setup failed: {str(e)}")
-            self.setup_status.setStyleSheet(f"color: {COLORS['accent_red']}; font-size: 11px;")
+            self.setup_status.setStyleSheet(f"color: {COLORS['danger']}; font-size: 12px; background: transparent; border: none;")
             QMessageBox.warning(self, "Setup Failed", f"Could not configure device:\n{str(e)}")
         
         finally:

@@ -1,80 +1,111 @@
 """
-welcome_page.py - Welcome/preset selection page
+welcome_page.py - Welcome/preset selection page with glassmorphism design
 """
 
 import os
 import json
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFileDialog, QFrame, QMessageBox, QGridLayout, QSizePolicy
+    QFileDialog, QFrame, QMessageBox, QGridLayout, QSizePolicy,
+    QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QColor
 
 from styles import COLORS
 from config_data import FullConfiguration, DEVICES, OutputConfig, OutputMode, CaseConfig
 
 
-class PresetCard(QWidget):
-    """Clickable card for preset selection"""
+class PresetCard(QFrame):
+    """Clickable card for preset selection - with proper hover states"""
     
     clicked = pyqtSignal(str)
     
-    def __init__(self, preset_id: str, title: str, description: str, parent=None):
+    def __init__(self, preset_id: str, title: str, description: str,
+                 accent_color: str = None, parent=None):
         super().__init__(parent)
         self.preset_id = preset_id
         self.selected = False
+        self.hovered = False
+        self.accent_color = accent_color or COLORS['accent_primary']
         self._setup_ui(title, description)
     
     def _setup_ui(self, title: str, description: str):
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.setMinimumHeight(120)
+        self.setFixedHeight(280)
+        self.setFixedWidth(260)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._update_style()
         
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.setSpacing(8)
-        layout.setContentsMargins(16, 20, 16, 20)
+        layout.setSpacing(16)
+        layout.setContentsMargins(28, 36, 28, 36)
+        
+        layout.addStretch()
         
         # Title
-        title_label = QLabel(title)
-        title_label.setFont(QFont("", 15, QFont.Weight.Bold))
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
+        self.title_label = QLabel(title)
+        self.title_label.setFont(QFont("", 18, QFont.Weight.Bold))
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_label.setStyleSheet(f"color: white; background: transparent;")
+        layout.addWidget(self.title_label)
         
         # Description
-        desc_label = QLabel(description)
-        desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        desc_label.setWordWrap(True)
-        desc_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
-        layout.addWidget(desc_label)
+        self.desc_label = QLabel(description)
+        self.desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.desc_label.setWordWrap(True)
+        self.desc_label.setStyleSheet(f"color: rgba(210,210,210,1.0); font-size: 13px; background: transparent;")
+        layout.addWidget(self.desc_label)
+        
+        layout.addStretch()
+        
+        # Apply initial style after labels are created
+        self._update_style()
     
     def _update_style(self):
         if self.selected:
+            # Selected state - brighter background
             self.setStyleSheet(f"""
-                QWidget {{
-                    background-color: {COLORS['bg_light']};
-                    border: 2px solid {COLORS['accent_blue']};
-                    border-radius: 12px;
+                PresetCard {{
+                    background-color: rgba(90, 90, 90, 0.95);
+                    border: none;
+                    border-radius: 16px;
                 }}
             """)
+            self.title_label.setStyleSheet(f"color: {self.accent_color}; background: transparent;")
+        elif self.hovered:
+            # Hover state - medium background
+            self.setStyleSheet(f"""
+                PresetCard {{
+                    background-color: rgba(70, 70, 70, 0.9);
+                    border: none;
+                    border-radius: 16px;
+                }}
+            """)
+            self.title_label.setStyleSheet(f"color: {self.accent_color}; background: transparent;")
         else:
+            # Default state - subtle background
             self.setStyleSheet(f"""
-                QWidget {{
-                    background-color: {COLORS['bg_medium']};
-                    border: 1px solid {COLORS['border_default']};
-                    border-radius: 12px;
-                }}
-                QWidget:hover {{
-                    border-color: {COLORS['accent_blue']};
-                    background-color: {COLORS['bg_light']};
+                PresetCard {{
+                    background-color: rgba(55, 55, 55, 0.85);
+                    border: none;
+                    border-radius: 16px;
                 }}
             """)
+            self.title_label.setStyleSheet(f"color: white; background: transparent;")
     
     def set_selected(self, selected: bool):
         self.selected = selected
         self._update_style()
+    
+    def enterEvent(self, event):
+        self.hovered = True
+        self._update_style()
+        super().enterEvent(event)
+    
+    def leaveEvent(self, event):
+        self.hovered = False
+        self._update_style()
+        super().leaveEvent(event)
     
     def mousePressEvent(self, event):
         self.clicked.emit(self.preset_id)
@@ -82,7 +113,7 @@ class PresetCard(QWidget):
 
 
 class WelcomePage(QWidget):
-    """Welcome page with preset selection and file upload"""
+    """Welcome page with preset selection and file upload - Glass style"""
     
     config_loaded = pyqtSignal(object)  # Emits FullConfiguration
     
@@ -94,33 +125,42 @@ class WelcomePage(QWidget):
         self._setup_ui()
     
     def _setup_ui(self):
+        self.setStyleSheet("background-color: transparent;")
+        
         layout = QVBoxLayout(self)
         layout.setSpacing(24)
-        layout.setContentsMargins(32, 48, 32, 32)
+        layout.setContentsMargins(48, 48, 48, 48)
+        
+        layout.addStretch()
         
         # Welcome message
-        welcome = QLabel("Welcome to inCODE NGX Configuration Tool")
-        welcome.setFont(QFont("", 24, QFont.Weight.Bold))
+        welcome = QLabel("Choose Your Starting Point")
+        welcome.setFont(QFont("", 36, QFont.Weight.Bold))
         welcome.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        welcome.setStyleSheet(f"color: {COLORS['text_primary']}; background: transparent;")
         layout.addWidget(welcome)
         
-        subtitle = QLabel("Select a starting configuration or upload an existing one")
-        subtitle.setFont(QFont("", 13))
-        subtitle.setStyleSheet(f"color: {COLORS['text_secondary']};")
+        subtitle = QLabel("Select a preset configuration or load an existing file")
+        subtitle.setFont(QFont("", 15))
+        subtitle.setStyleSheet(f"color: {COLORS['text_secondary']}; background: transparent;")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(subtitle)
         
-        layout.addSpacing(32)
+        layout.addSpacing(48)
         
-        # Preset cards
-        cards_layout = QHBoxLayout()
-        cards_layout.setSpacing(24)
+        # Preset cards - centered container
+        cards_container = QWidget()
+        cards_container.setStyleSheet("background-color: transparent;")
+        cards_layout = QHBoxLayout(cards_container)
+        cards_layout.setSpacing(32)
+        cards_layout.setContentsMargins(0, 0, 0, 0)
         
         # Front Engine preset
         front_card = PresetCard(
             "front_engine",
             "Front Engine",
-            "Standard configuration for front-engine vehicles"
+            "Standard configuration for\nfront-engine vehicles",
+            accent_color="#60B0E1"  # Primary accent
         )
         front_card.clicked.connect(self._on_preset_selected)
         self.preset_cards["front_engine"] = front_card
@@ -130,7 +170,8 @@ class WelcomePage(QWidget):
         rear_card = PresetCard(
             "rear_engine", 
             "Rear Engine",
-            "Configuration for rear/mid-engine vehicles"
+            "Configuration for rear or\nmid-engine vehicles",
+            accent_color="#8B5CF6"  # Purple
         )
         rear_card.clicked.connect(self._on_preset_selected)
         self.preset_cards["rear_engine"] = rear_card
@@ -140,23 +181,36 @@ class WelcomePage(QWidget):
         upload_card = PresetCard(
             "upload",
             "Load From File",
-            "Upload an existing configuration file"
+            "Import an existing\nconfiguration file",
+            accent_color="#10B981"  # Green
         )
         upload_card.clicked.connect(self._on_upload_clicked)
         self.preset_cards["upload"] = upload_card
         cards_layout.addWidget(upload_card)
         
-        layout.addLayout(cards_layout)
+        # Center the cards
+        center_layout = QHBoxLayout()
+        center_layout.addStretch()
+        center_layout.addWidget(cards_container)
+        center_layout.addStretch()
+        layout.addLayout(center_layout)
         
-        # Status label
+        layout.addSpacing(24)
+        
+        # Status label with pill style
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet(f"""
-            color: {COLORS['accent_green']};
-            font-size: 14px;
-            padding: 12px;
+            color: {COLORS['success']};
+            font-size: 15px;
+            font-weight: 600;
+            padding: 16px 32px;
+            background-color: rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            border: none;
         """)
-        layout.addWidget(self.status_label)
+        self.status_label.setVisible(False)
+        layout.addWidget(self.status_label, alignment=Qt.AlignmentFlag.AlignCenter)
         
         layout.addStretch()
     
@@ -171,11 +225,12 @@ class WelcomePage(QWidget):
         # Load preset configuration
         if preset_id == "front_engine":
             self.config = self._create_front_engine_preset()
-            self.status_label.setText("Front Engine preset loaded - Click Next to continue")
+            self.status_label.setText("✓ Front Engine preset loaded")
         elif preset_id == "rear_engine":
             self.config = self._create_rear_engine_preset()
-            self.status_label.setText("Rear Engine preset loaded - Click Next to continue")
+            self.status_label.setText("✓ Rear Engine preset loaded")
         
+        self.status_label.setVisible(True)
         self.config_loaded.emit(self.config)
     
     def _on_upload_clicked(self, preset_id: str):
@@ -225,7 +280,8 @@ class WelcomePage(QWidget):
                 self.selected_preset = "upload"
                 
                 filename = os.path.basename(file_path)
-                self.status_label.setText(f"Loaded: {filename} - Click Next to continue")
+                self.status_label.setText(f"✓ Loaded: {filename}")
+                self.status_label.setVisible(True)
                 self.config_loaded.emit(self.config)
                 
             except Exception as e:
@@ -238,4 +294,5 @@ class WelcomePage(QWidget):
         for card in self.preset_cards.values():
             card.set_selected(False)
         self.status_label.setText("")
+        self.status_label.setVisible(False)
         self.config = FullConfiguration()
