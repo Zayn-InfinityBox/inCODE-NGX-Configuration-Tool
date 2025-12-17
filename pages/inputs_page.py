@@ -373,19 +373,54 @@ class OutputConfigWidget(QWidget):
         )
     
     def set_config(self, config: OutputConfig):
-        self.config = config
-        self.enable_check.setChecked(config.enabled)
+        """Set configuration. Blocks signals to prevent unwanted change events."""
+        # Block signals to prevent cascade of changed events during setup
+        self.enable_check.blockSignals(True)
+        self.mode_combo.blockSignals(True)
+        self.pwm_slider.blockSignals(True)
         
-        idx = self.mode_combo.findData(config.mode)
-        if idx >= 0:
-            self.mode_combo.setCurrentIndex(idx)
-        
-        self.pwm_slider.setValue(config.pwm_duty)
+        try:
+            self.config = config
+            self.enable_check.setChecked(config.enabled)
+            self.mode_combo.setEnabled(config.enabled)
+            
+            idx = self.mode_combo.findData(config.mode)
+            if idx >= 0:
+                self.mode_combo.setCurrentIndex(idx)
+            
+            self.pwm_slider.setValue(config.pwm_duty)
+            
+            # Update PWM visibility manually since we blocked signals
+            show_pwm = (config.mode == OutputMode.PWM and config.enabled)
+            self.pwm_label.setVisible(show_pwm)
+            self.pwm_slider.setVisible(show_pwm)
+            self.pwm_value.setVisible(show_pwm)
+            if show_pwm:
+                percent = int((config.pwm_duty / 15) * 100)
+                self.pwm_value.setText(f"{percent}%")
+        finally:
+            self.enable_check.blockSignals(False)
+            self.mode_combo.blockSignals(False)
+            self.pwm_slider.blockSignals(False)
     
     def reset(self):
-        self.enable_check.setChecked(False)
-        self.mode_combo.setCurrentIndex(0)
-        self.pwm_slider.setValue(15)
+        """Reset to default state. Blocks signals to prevent change cascade."""
+        self.enable_check.blockSignals(True)
+        self.mode_combo.blockSignals(True)
+        self.pwm_slider.blockSignals(True)
+        try:
+            self.enable_check.setChecked(False)
+            self.mode_combo.setEnabled(False)
+            self.mode_combo.setCurrentIndex(0)
+            self.pwm_slider.setValue(15)
+            self.pwm_label.setVisible(False)
+            self.pwm_slider.setVisible(False)
+            self.pwm_value.setVisible(False)
+            self.config = OutputConfig()
+        finally:
+            self.enable_check.blockSignals(False)
+            self.mode_combo.blockSignals(False)
+            self.pwm_slider.blockSignals(False)
 
 
 class DeviceOutputsWidget(QWidget):
@@ -470,7 +505,10 @@ class DeviceOutputsWidget(QWidget):
     def set_enabled(self, enabled: bool):
         """Enable/disable this device (used when no header)"""
         self._enabled = enabled
+        # Block signals to prevent change cascade
+        self.device_check.blockSignals(True)
         self.device_check.setChecked(enabled)
+        self.device_check.blockSignals(False)
         if not self.show_header:
             self.outputs_container.setVisible(enabled)
     
@@ -483,19 +521,31 @@ class DeviceOutputsWidget(QWidget):
         return configs
     
     def set_output_configs(self, configs: dict):
-        has_any = len(configs) > 0
-        self.device_check.setChecked(has_any)
-        
-        for widget in self.output_widgets:
-            if widget.output_num in configs:
-                widget.set_config(configs[widget.output_num])
-            else:
-                widget.reset()
+        """Set output configurations. Blocks signals to prevent change cascade."""
+        # Block signals during setup
+        self.device_check.blockSignals(True)
+        try:
+            has_any = len(configs) > 0
+            self.device_check.setChecked(has_any)
+            
+            for widget in self.output_widgets:
+                if widget.output_num in configs:
+                    widget.set_config(configs[widget.output_num])
+                else:
+                    widget.reset()
+        finally:
+            self.device_check.blockSignals(False)
     
     def reset(self):
-        self.device_check.setChecked(False)
-        for widget in self.output_widgets:
-            widget.reset()
+        """Reset to default state. Blocks signals to prevent change cascade."""
+        self.device_check.blockSignals(True)
+        try:
+            self.device_check.setChecked(False)
+            self._enabled = False
+            for widget in self.output_widgets:
+                widget.reset()
+        finally:
+            self.device_check.blockSignals(False)
 
 
 class CaseEditor(QWidget):
@@ -503,12 +553,68 @@ class CaseEditor(QWidget):
     
     changed = pyqtSignal()
     
+    # Master stylesheet with all states - set once, never changed
+    _MASTER_STYLESHEET = None
+    _HEADER_EXPANDED_STYLE = None
+    
+    @classmethod
+    def _init_master_styles(cls):
+        """Initialize master stylesheet once - uses property selectors for state"""
+        if cls._MASTER_STYLESHEET is None:
+            cls._MASTER_STYLESHEET = f"""
+                CaseEditor[caseState="disabled"] {{
+                    background-color: {COLORS['bg_dark']};
+                    border: 1px solid {COLORS['border_default']};
+                    border-radius: 8px;
+                }}
+                CaseEditor[caseState="disabled"]:hover {{
+                    border-color: {COLORS['text_muted']};
+                }}
+                CaseEditor[caseState="enabled"] {{
+                    background-color: {COLORS['bg_light']};
+                    border: 2px solid {COLORS['accent_green']};
+                    border-radius: 8px;
+                }}
+                CaseEditor[caseState="enabled"]:hover {{
+                    border-color: {COLORS['accent_blue']};
+                }}
+                CaseEditor[caseState="has_data"] {{
+                    background-color: {COLORS['bg_dark']};
+                    border: 2px solid {COLORS['accent_orange']};
+                    border-radius: 8px;
+                }}
+                CaseEditor[caseState="has_data"]:hover {{
+                    border-color: {COLORS['accent_yellow']};
+                }}
+                CaseEditor[caseState="expanded"] {{
+                    background-color: {COLORS['bg_medium']};
+                    border: 2px solid {COLORS['accent_blue']};
+                    border-radius: 8px;
+                }}
+            """
+            cls._HEADER_EXPANDED_STYLE = f"""
+                QFrame {{
+                    background-color: {COLORS['bg_light']};
+                    border-top-left-radius: 6px;
+                    border-top-right-radius: 6px;
+                }}
+            """
+    
     def __init__(self, case_type: str, case_index: int, parent=None):
         super().__init__(parent)
         self.case_type = case_type
         self.case_index = case_index
         self.device_widgets = {}
         self.is_expanded = False
+        self.is_default = False  # Track if case was loaded from preset
+        self._stored_config = None  # Store config when enabled
+        self._cached_style_state = None  # Track current style state
+        
+        # Initialize class-level styles once
+        CaseEditor._init_master_styles()
+        
+        # Set master stylesheet once - never changes
+        self.setStyleSheet(CaseEditor._MASTER_STYLESHEET)
         
         self._setup_ui()
         self._update_style()
@@ -522,18 +628,82 @@ class CaseEditor(QWidget):
         self.header = QFrame()
         self.header.setCursor(Qt.CursorShape.PointingHandCursor)
         header_layout = QHBoxLayout(self.header)
-        header_layout.setContentsMargins(12, 12, 12, 12)
+        header_layout.setContentsMargins(12, 10, 12, 10)
+        header_layout.setSpacing(8)
         
         case_label = f"{self.case_type.upper()} Case {self.case_index + 1}"
         self.enable_check = QCheckBox(case_label)
         self.enable_check.setFont(QFont("", 12, QFont.Weight.Bold))
+        self.enable_check.setStyleSheet(f"""
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                spacing: 10px;
+                background: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 22px;
+                height: 22px;
+                border-radius: 5px;
+                border: 2px solid rgba(100, 100, 100, 0.8);
+                background: rgba(60, 60, 60, 0.9);
+            }}
+            QCheckBox::indicator:hover {{
+                border-color: {COLORS['accent_blue']};
+                background: rgba(80, 80, 80, 1.0);
+            }}
+            QCheckBox::indicator:checked {{
+                background: {COLORS['accent_green']};
+                border-color: {COLORS['accent_green']};
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background: {COLORS['accent_primary']};
+                border-color: {COLORS['accent_primary']};
+            }}
+        """)
         self.enable_check.stateChanged.connect(self._on_enable_changed)
-        header_layout.addWidget(self.enable_check)
+        header_layout.addWidget(self.enable_check, alignment=Qt.AlignmentFlag.AlignVCenter)
+        
+        # Default label (italicized, shown when case was loaded from preset)
+        self.default_label = QLabel("default")
+        self.default_label.setStyleSheet(f"""
+            color: {COLORS['text_muted']};
+            font-style: italic;
+            font-size: 11px;
+            background: transparent;
+        """)
+        self.default_label.setVisible(False)
+        header_layout.addWidget(self.default_label, alignment=Qt.AlignmentFlag.AlignVCenter)
         
         header_layout.addStretch()
         
+        # Clear button - explicitly clears case data
+        self.clear_btn = QPushButton("Clear")
+        self.clear_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: rgba(70, 70, 70, 0.9);
+                color: {COLORS['text_secondary']};
+                border: none;
+                border-radius: 5px;
+                font-size: 11px;
+                font-weight: 600;
+                padding: 4px 10px;
+                min-width: 50px;
+                max-width: 50px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['danger']};
+                color: white;
+            }}
+        """)
+        self.clear_btn.clicked.connect(self._on_clear_clicked)
+        self.clear_btn.setVisible(False)  # Only show when case has data
+        header_layout.addWidget(self.clear_btn)
+        
+        # Spacer between clear button and expand arrow
+        header_layout.addSpacing(16)
+        
         self.expand_label = QLabel("▶")
-        self.expand_label.setStyleSheet(f"color: {COLORS['text_muted']};")
+        self.expand_label.setStyleSheet(f"color: {COLORS['text_muted']}; background: transparent;")
         header_layout.addWidget(self.expand_label)
         
         self.main_layout.addWidget(self.header)
@@ -606,7 +776,7 @@ class CaseEditor(QWidget):
         
         # Mode dropdown with card
         self.mode_combo = QComboBox()
-        self.mode_combo.addItem("Momentary", "momentary")
+        self.mode_combo.addItem("Track", "track")
         self.mode_combo.addItem("Toggle", "toggle")
         self.mode_combo.addItem("Timed", "timed")
         self.mode_combo.setMinimumWidth(130)
@@ -684,52 +854,111 @@ class CaseEditor(QWidget):
         self.main_layout.addWidget(self.content)
     
     def _update_style(self):
-        """Update visual style based on state"""
+        """Update visual style based on state. Uses property selectors for fast switching."""
+        is_enabled = self.enable_check.isChecked()
+        has_data = self._has_configured_data()
+        
+        # Determine the style state
         if self.is_expanded:
-            self.setStyleSheet(f"""
-                CaseEditor {{
-                    background-color: {COLORS['bg_medium']};
-                    border: 2px solid {COLORS['accent_blue']};
-                    border-radius: 8px;
-                }}
-            """)
-            self.expand_label.setText("▼")
-            self.header.setStyleSheet(f"""
-                QFrame {{
-                    background-color: {COLORS['bg_light']};
-                    border-top-left-radius: 6px;
-                    border-top-right-radius: 6px;
-                }}
-            """)
+            new_state = 'expanded'
+        elif is_enabled:
+            new_state = 'enabled'
+        elif has_data:
+            new_state = 'has_data'
         else:
-            if self.enable_check.isChecked():
-                self.setStyleSheet(f"""
-                    CaseEditor {{
-                        background-color: {COLORS['bg_light']};
-                        border: 1px solid {COLORS['accent_green']};
-                        border-radius: 8px;
-                    }}
-                """)
+            new_state = 'disabled'
+        
+        # Only update if state changed
+        if self._cached_style_state != new_state:
+            self._cached_style_state = new_state
+            
+            # Update property - this triggers style refresh via property selectors
+            self.setProperty('caseState', new_state)
+            self.style().unpolish(self)
+            self.style().polish(self)
+            
+            # Update expand arrow and header
+            if new_state == 'expanded':
+                self.expand_label.setText("▼")
+                self.header.setStyleSheet(CaseEditor._HEADER_EXPANDED_STYLE)
             else:
-                self.setStyleSheet(f"""
-                    CaseEditor {{
-                        background-color: {COLORS['bg_dark']};
-                        border: 1px solid {COLORS['border_default']};
-                        border-radius: 8px;
-                    }}
-                    CaseEditor:hover {{
-                        border-color: {COLORS['text_muted']};
-                    }}
-                """)
-            self.expand_label.setText("▶")
-            self.header.setStyleSheet("")
+                self.expand_label.setText("▶")
+                self.header.setStyleSheet("")
     
     def _on_enable_changed(self, state):
         enabled = state == Qt.CheckState.Checked.value
-        self.is_expanded = enabled
-        self.content.setVisible(enabled)
+        
+        if enabled:
+            # Expanding - show content
+            self.is_expanded = True
+            self.content.setVisible(True)
+        else:
+            # Disabling - just collapse, DON'T clear data
+            # User must explicitly click Clear to remove data
+            self.is_expanded = False
+            self.content.setVisible(False)
+        
         self._update_style()
+        self._update_clear_button_visibility()
         self.changed.emit()
+    
+    def _on_clear_clicked(self):
+        """Explicitly clear all case data when user clicks Clear button"""
+        reply = QMessageBox.question(
+            self, 
+            "Clear Case", 
+            f"Are you sure you want to clear all data for {self.case_type.upper()} Case {self.case_index + 1}?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            # Disable and clear
+            self.enable_check.blockSignals(True)
+            self.enable_check.setChecked(False)
+            self.enable_check.blockSignals(False)
+            
+            self.is_expanded = False
+            self.content.setVisible(False)
+            self._clear_to_empty()
+            self.is_default = False
+            self.default_label.setVisible(False)
+            
+            self._update_style()
+            self._update_clear_button_visibility()
+            self.changed.emit()
+    
+    def _update_clear_button_visibility(self):
+        """Show Clear button only when case has data configured"""
+        has_data = self._has_configured_data()
+        self.clear_btn.setVisible(has_data)
+    
+    def _has_configured_data(self) -> bool:
+        """Check if this case has any data configured"""
+        # Check if any device has configured outputs
+        selected_device_id = self.device_combo.currentData()
+        if selected_device_id and selected_device_id in self.device_widgets:
+            widget = self.device_widgets[selected_device_id]
+            output_configs = widget.get_output_configs()
+            if output_configs:
+                return True
+        
+        # Check if conditions are set
+        if self.must_on_dropdown.get_selected() or self.must_off_dropdown.get_selected():
+            return True
+        
+        return False
+    
+    def _clear_to_empty(self):
+        """Clear all configuration to empty state"""
+        self.device_combo.setCurrentIndex(0)  # "Select a device..."
+        for widget in self.device_widgets.values():
+            widget.setVisible(False)
+            widget.reset()
+        self.mode_combo.setCurrentIndex(0)
+        self.pattern_combo.setCurrentIndex(0)
+        self.must_on_dropdown.clear_selection()
+        self.must_off_dropdown.clear_selection()
     
     def _on_device_changed(self, index):
         """Show only the outputs for the selected device"""
@@ -749,7 +978,15 @@ class CaseEditor(QWidget):
     def mousePressEvent(self, event):
         """Toggle expansion on header click"""
         if self.header.geometry().contains(event.pos()):
-            self.enable_check.setChecked(not self.enable_check.isChecked())
+            # Only expand/collapse if already enabled, otherwise toggle enable
+            if self.enable_check.isChecked():
+                # Toggle expansion only
+                self.is_expanded = not self.is_expanded
+                self.content.setVisible(self.is_expanded)
+                self._update_style()
+            else:
+                # Enable and expand
+                self.enable_check.setChecked(True)
         super().mousePressEvent(event)
     
     def get_config(self) -> CaseConfig:
@@ -777,51 +1014,98 @@ class CaseEditor(QWidget):
         
         return config
     
-    def set_config(self, config: CaseConfig):
-        self.enable_check.setChecked(config.enabled)
+    def set_config(self, config: CaseConfig, is_default: bool = False):
+        """Set configuration. is_default=True when loaded from preset file."""
+        # Block signals during setup to prevent change cascade
+        self.enable_check.blockSignals(True)
+        self.device_combo.blockSignals(True)
+        self.mode_combo.blockSignals(True)
+        self.pattern_combo.blockSignals(True)
         
-        device_output_dict = dict(config.device_outputs) if config.device_outputs else {}
-        
-        # Set device dropdown and show appropriate widget
-        if device_output_dict:
-            # Get the first (and only) device
-            selected_device_id = list(device_output_dict.keys())[0]
-            idx = self.device_combo.findData(selected_device_id)
-            if idx >= 0:
-                self.device_combo.setCurrentIndex(idx)
-        else:
-            self.device_combo.setCurrentIndex(0)  # "Select a device..."
-        
-        for device_id, widget in self.device_widgets.items():
-            if device_id in device_output_dict:
-                widget.setVisible(True)
-                widget.set_enabled(True)
-                widget.set_output_configs(device_output_dict[device_id])
+        try:
+            self.enable_check.setChecked(config.enabled)
+            
+            # Set default flag and show label if this is a preset-loaded config
+            self.is_default = is_default and config.enabled
+            self.default_label.setVisible(self.is_default)
+            
+            # Keep collapsed when loading - user clicks to expand
+            self.is_expanded = False
+            self.content.setVisible(False)
+            
+            device_output_dict = dict(config.device_outputs) if config.device_outputs else {}
+            
+            # Set device dropdown and show appropriate widget
+            if device_output_dict:
+                # Get the first (and only) device
+                selected_device_id = list(device_output_dict.keys())[0]
+                idx = self.device_combo.findData(selected_device_id)
+                if idx >= 0:
+                    self.device_combo.setCurrentIndex(idx)
             else:
-                widget.setVisible(False)
-                widget.reset()
-        
-        idx = self.mode_combo.findData(config.mode)
-        if idx >= 0:
-            self.mode_combo.setCurrentIndex(idx)
-        
-        idx = self.pattern_combo.findData(config.pattern_preset)
-        if idx >= 0:
-            self.pattern_combo.setCurrentIndex(idx)
-        
-        self.must_on_dropdown.set_selected(config.must_be_on or [])
-        self.must_off_dropdown.set_selected(config.must_be_off or [])
+                self.device_combo.setCurrentIndex(0)  # "Select a device..."
+            
+            for device_id, widget in self.device_widgets.items():
+                if device_id in device_output_dict:
+                    widget.setVisible(True)
+                    widget.set_enabled(True)
+                    widget.set_output_configs(device_output_dict[device_id])
+                else:
+                    widget.setVisible(False)
+                    widget.reset()
+            
+            idx = self.mode_combo.findData(config.mode)
+            if idx >= 0:
+                self.mode_combo.setCurrentIndex(idx)
+            
+            idx = self.pattern_combo.findData(config.pattern_preset)
+            if idx >= 0:
+                self.pattern_combo.setCurrentIndex(idx)
+            
+            self.must_on_dropdown.set_selected(config.must_be_on or [])
+            self.must_off_dropdown.set_selected(config.must_be_off or [])
+            
+            self._update_style()
+            self._update_clear_button_visibility()
+        finally:
+            # Always unblock signals
+            self.enable_check.blockSignals(False)
+            self.device_combo.blockSignals(False)
+            self.mode_combo.blockSignals(False)
+            self.pattern_combo.blockSignals(False)
     
     def reset(self):
-        self.enable_check.setChecked(False)
-        self.device_combo.setCurrentIndex(0)  # "Select a device..."
-        for widget in self.device_widgets.values():
-            widget.setVisible(False)
-            widget.reset()
-        self.mode_combo.setCurrentIndex(0)
-        self.pattern_combo.setCurrentIndex(0)
-        self.must_on_dropdown.clear_selection()
-        self.must_off_dropdown.clear_selection()
+        """Reset to empty disabled state. Blocks signals to prevent change cascade."""
+        # Block signals during reset
+        self.enable_check.blockSignals(True)
+        self.device_combo.blockSignals(True)
+        self.mode_combo.blockSignals(True)
+        self.pattern_combo.blockSignals(True)
+        
+        try:
+            self.enable_check.setChecked(False)
+            
+            self.is_default = False
+            self.default_label.setVisible(False)
+            self.is_expanded = False
+            self.content.setVisible(False)
+            
+            self.device_combo.setCurrentIndex(0)  # "Select a device..."
+            for widget in self.device_widgets.values():
+                widget.setVisible(False)
+                widget.reset()
+            self.mode_combo.setCurrentIndex(0)
+            self.pattern_combo.setCurrentIndex(0)
+            self.must_on_dropdown.clear_selection()
+            self.must_off_dropdown.clear_selection()
+            
+            self._update_style()
+            self._update_clear_button_visibility()
+        finally:
+            self.enable_check.blockSignals(False)
+            self.device_combo.blockSignals(False)
+            self.mode_combo.blockSignals(False)
+            self.pattern_combo.blockSignals(False)
 
 
 class InputConfigPanel(QWidget):
@@ -862,12 +1146,12 @@ class InputConfigPanel(QWidget):
         layout.addLayout(name_layout)
         
         # Scroll area for cases
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
-        scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(self.scroll_content)
         scroll_layout.setSpacing(8)
         
         # ON Cases
@@ -897,21 +1181,18 @@ class InputConfigPanel(QWidget):
             scroll_layout.addWidget(editor)
         
         scroll_layout.addStretch()
-        scroll.setWidget(scroll_content)
-        layout.addWidget(scroll)
+        self.scroll.setWidget(self.scroll_content)
+        layout.addWidget(self.scroll)
     
     def set_input(self, input_def: InputDefinition):
+        """Set the input definition. Just updates labels - set_config handles the rest."""
         self.current_input = input_def
         self.header_label.setText(f"Input {input_def.number}: {input_def.name}")
         self.subheader_label.setText(
             f"Type: {input_def.input_type.title()} | Connector {input_def.connector}, Pin {input_def.pin}"
         )
-        
-        self.custom_name_edit.setText("")
-        for editor in self.on_case_editors:
-            editor.reset()
-        for editor in self.off_case_editors:
-            editor.reset()
+        # Note: Don't reset editors here - set_config() will set all values directly
+        # This avoids double-updating (reset then set)
     
     def get_config(self) -> InputConfig:
         if not self.current_input:
@@ -928,14 +1209,18 @@ class InputConfigPanel(QWidget):
         
         return config
     
-    def set_config(self, config: InputConfig):
+    def set_config(self, config: InputConfig, is_default: bool = False):
+        """Set configuration. is_default=True marks cases loaded from preset."""
+        self.custom_name_edit.blockSignals(True)
         self.custom_name_edit.setText(config.custom_name)
+        self.custom_name_edit.blockSignals(False)
         
+        # Set case configs - signals already blocked inside set_config()
         for i, case_config in enumerate(config.on_cases[:8]):
-            self.on_case_editors[i].set_config(case_config)
+            self.on_case_editors[i].set_config(case_config, is_default=is_default)
         
         for i, case_config in enumerate(config.off_cases[:2]):
-            self.off_case_editors[i].set_config(case_config)
+            self.off_case_editors[i].set_config(case_config, is_default=is_default)
 
 
 class InputsPage(QWidget):
@@ -945,6 +1230,7 @@ class InputsPage(QWidget):
         super().__init__(parent)
         self.config = config
         self.current_input_number = None
+        self.is_preset_loaded = False  # Track if config came from preset
         self._setup_ui()
     
     def _setup_ui(self):
@@ -1053,8 +1339,16 @@ class InputsPage(QWidget):
         
         if input_def:
             self.current_input_number = input_number
-            self.config_panel.set_input(input_def)
-            self.config_panel.set_config(self.config.inputs[input_number - 1])
+            # Disable UI updates during the switch to prevent lag
+            self.config_panel.setUpdatesEnabled(False)
+            try:
+                self.config_panel.set_input(input_def)
+                self.config_panel.set_config(
+                    self.config.inputs[input_number - 1],
+                    is_default=self.is_preset_loaded
+                )
+            finally:
+                self.config_panel.setUpdatesEnabled(True)
     
     def _on_config_changed(self):
         if self.current_input_number:
@@ -1087,13 +1381,31 @@ class InputsPage(QWidget):
         if self.current_input_number:
             self.config.inputs[self.current_input_number - 1] = self.config_panel.get_config()
     
-    def set_configuration(self, config: FullConfiguration):
-        """Set the full configuration"""
+    def set_configuration(self, config: FullConfiguration, is_preset: bool = False):
+        """Set the full configuration. is_preset=True marks cases as 'default'."""
+        # Store the new configuration
         self.config = config
         self.current_input_number = None
+        self.is_preset_loaded = is_preset
+        
+        # Reset the config panel to clear any stale state from previous configuration
+        self._reset_config_panel()
+        
+        # Repopulate the list with new configuration data
         self._populate_input_list(self.filter_combo.currentData() or "all")
         
-        # Auto-select first input (Input 1)
+        # Auto-select first input (Input 1) - this will load the new config for input 1
         if self.input_list.count() > 0:
             self.input_list.setCurrentRow(0)
+    
+    def _reset_config_panel(self):
+        """Reset all editors in the config panel to clear stale state"""
+        # Reset custom name
+        self.config_panel.custom_name_edit.setText("")
+        
+        # Reset all case editors
+        for editor in self.config_panel.on_case_editors:
+            editor.reset()
+        for editor in self.config_panel.off_case_editors:
+            editor.reset()
 

@@ -10,10 +10,10 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QStackedWidget, QLabel, QPushButton, QFrame, QProgressBar,
-    QMessageBox, QGraphicsDropShadowEffect
+    QMessageBox, QGraphicsDropShadowEffect, QMenuBar, QMenu, QFileDialog
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QPixmap, QColor, QPalette, QLinearGradient, QPainter
+from PyQt6.QtGui import QFont, QPixmap, QColor, QPalette, QLinearGradient, QPainter, QAction, QKeySequence
 
 from styles import MAIN_STYLESHEET, COLORS, ICONS, BACKGROUND_GRADIENT
 from can_interface import CANInterface
@@ -238,17 +238,158 @@ class MainWindow(QMainWindow):
         # Ensure directories exist
         self._ensure_directories()
         
+        self._setup_menu()
         self._setup_ui()
         self._connect_signals()
     
     def _ensure_directories(self):
         """Create backup and config directories if they don't exist"""
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        self.backup_dir = os.path.join(base_path, "backups")
-        self.config_dir = os.path.join(base_path, "configurations")
+        # Use appropriate location for data directories
+        if hasattr(sys, '_MEIPASS'):
+            # Running as PyInstaller bundle - use user's home directory
+            app_data_dir = os.path.join(os.path.expanduser("~"), ".incode_ngx_config")
+        else:
+            # Running from source - use source directory
+            app_data_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        self.backup_dir = os.path.join(app_data_dir, "backups")
+        self.config_dir = os.path.join(app_data_dir, "configurations")
         
         os.makedirs(self.backup_dir, exist_ok=True)
         os.makedirs(self.config_dir, exist_ok=True)
+    
+    def _setup_menu(self):
+        """Create the application menu bar"""
+        menubar = self.menuBar()
+        menubar.setStyleSheet(f"""
+            QMenuBar {{
+                background-color: rgba(25, 25, 25, 0.95);
+                color: {COLORS['text_primary']};
+                padding: 4px 8px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }}
+            QMenuBar::item {{
+                padding: 6px 12px;
+                border-radius: 4px;
+            }}
+            QMenuBar::item:selected {{
+                background-color: rgba(96, 176, 225, 0.3);
+            }}
+            QMenu {{
+                background-color: rgba(45, 45, 45, 0.98);
+                color: {COLORS['text_primary']};
+                border: none;
+                border-radius: 8px;
+                padding: 8px;
+            }}
+            QMenu::item {{
+                padding: 10px 24px;
+                border-radius: 4px;
+                margin: 2px;
+            }}
+            QMenu::item:selected {{
+                background-color: {COLORS['accent_primary']};
+                color: white;
+            }}
+            QMenu::separator {{
+                height: 1px;
+                background-color: rgba(255, 255, 255, 0.1);
+                margin: 6px 12px;
+            }}
+        """)
+        
+        # File menu
+        file_menu = menubar.addMenu("File")
+        
+        # Save Configuration action
+        save_action = QAction("Save Configuration...", self)
+        save_action.setShortcut(QKeySequence.StandardKey.Save)
+        save_action.triggered.connect(self._save_configuration)
+        file_menu.addAction(save_action)
+        
+        # Save Configuration As action
+        save_as_action = QAction("Save Configuration As...", self)
+        save_as_action.setShortcut(QKeySequence("Ctrl+Shift+S"))
+        save_as_action.triggered.connect(self._save_configuration_as)
+        file_menu.addAction(save_as_action)
+        
+        file_menu.addSeparator()
+        
+        # Exit action
+        exit_action = QAction("Exit", self)
+        exit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+    
+    def _save_configuration(self):
+        """Save configuration to the configurations folder with timestamp"""
+        # Save current input first if on inputs page
+        if self.pages.currentIndex() == 2:  # Inputs page
+            self.inputs_page.save_current_input()
+        
+        # Generate timestamp filename
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"Configuration_{timestamp}.json"
+        filepath = os.path.join(self.config_dir, filename)
+        
+        try:
+            with open(filepath, 'w') as f:
+                f.write(self.configuration.to_json())
+            
+            QMessageBox.information(
+                self, 
+                "Configuration Saved",
+                f"Configuration saved successfully!\n\n"
+                f"File: {filename}\n"
+                f"Location: {self.config_dir}\n\n"
+                f"You can load this configuration later from the Welcome page."
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Save Failed",
+                f"Failed to save configuration:\n{str(e)}"
+            )
+    
+    def _save_configuration_as(self):
+        """Save configuration to a user-specified location"""
+        # Save current input first if on inputs page
+        if self.pages.currentIndex() == 2:  # Inputs page
+            self.inputs_page.save_current_input()
+        
+        # Generate default filename
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        default_name = f"Configuration_{timestamp}.json"
+        
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Configuration",
+            os.path.join(self.config_dir, default_name),
+            "JSON Files (*.json);;All Files (*)"
+        )
+        
+        if filepath:
+            try:
+                # Ensure .json extension
+                if not filepath.endswith('.json'):
+                    filepath += '.json'
+                
+                with open(filepath, 'w') as f:
+                    f.write(self.configuration.to_json())
+                
+                QMessageBox.information(
+                    self,
+                    "Configuration Saved",
+                    f"Configuration saved successfully!\n\n"
+                    f"File: {os.path.basename(filepath)}\n\n"
+                    f"You can load this configuration later from the Welcome page."
+                )
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Save Failed",
+                    f"Failed to save configuration:\n{str(e)}"
+                )
     
     def _setup_ui(self):
         central = QWidget()
@@ -382,6 +523,10 @@ class MainWindow(QMainWindow):
     def _go_back(self):
         current = self.pages.currentIndex()
         if current > 0:
+            # Save current input before leaving inputs page
+            if current == 2:  # Inputs page
+                self.inputs_page.save_current_input()
+            
             self.pages.setCurrentIndex(current - 1)
             self._update_navigation()
     
@@ -389,7 +534,13 @@ class MainWindow(QMainWindow):
         current = self.pages.currentIndex()
         
         if current == 0:
-            # Welcome -> Connection
+            # Welcome -> Connection: Load the selected configuration now
+            config, is_preset = self.welcome_page.load_selected_config()
+            if config:
+                self.configuration = config
+                self.inputs_page.set_configuration(config, is_preset=is_preset)
+                self.confirmation_page.set_configuration(config)
+                self.write_page.set_configuration(config)
             self.pages.setCurrentIndex(1)
         
         elif current == 1:
@@ -430,17 +581,17 @@ class MainWindow(QMainWindow):
         """Reset and go back to welcome page"""
         self.configuration = FullConfiguration()
         self.welcome_page.reset()
-        self.inputs_page.set_configuration(self.configuration)
+        self.inputs_page.set_configuration(self.configuration, is_preset=False)
         self.confirmation_page.set_configuration(self.configuration)
         self.write_page.set_configuration(self.configuration)  # Update write page too!
         self.write_page.reset()
         self.pages.setCurrentIndex(0)
         self._update_navigation()
     
-    def _on_config_loaded(self, config: FullConfiguration):
+    def _on_config_loaded(self, config: FullConfiguration, is_preset: bool = False):
         """Handle configuration loaded from file or preset"""
         self.configuration = config
-        self.inputs_page.set_configuration(config)
+        self.inputs_page.set_configuration(config, is_preset=is_preset)
         self.confirmation_page.set_configuration(config)
         self.write_page.set_configuration(config)  # Update write page too!
     

@@ -181,7 +181,7 @@ class ConfirmationPage(QWidget):
         header.addWidget(name_label)
         
         # Mode
-        mode_text = {"momentary": "Momentary", "toggle": "Toggle", "timed": "Timed"}.get(case.mode, "Momentary")
+        mode_text = {"track": "Track", "toggle": "Toggle", "timed": "Timed"}.get(case.mode, "Track")
         mode_label = QLabel(f"[{mode_text}]")
         mode_label.setStyleSheet("color: #AAA; background: transparent;")
         header.addWidget(mode_label)

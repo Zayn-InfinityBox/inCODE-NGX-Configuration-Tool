@@ -293,7 +293,7 @@ class CaseEditor(QWidget):
         
         behavior_layout.addWidget(QLabel("Mode:"), 0, 0)
         self.mode_combo = QComboBox()
-        self.mode_combo.addItem("Momentary (active while held)", "momentary")
+        self.mode_combo.addItem("Track (follows input state)", "track")
         self.mode_combo.addItem("Toggle (flip each press)", "toggle")
         self.mode_combo.addItem("Timed (on for duration)", "timed")
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
@@ -354,7 +354,7 @@ class CaseEditor(QWidget):
         mode = self.mode_combo.currentData()
         self.config.mode = mode
         self.timer_on_spin.setEnabled(mode == 'timed')
-        self.timer_delay_spin.setEnabled(mode in ['momentary', 'timed'])
+        self.timer_delay_spin.setEnabled(mode in ['track', 'timed'])
         self.changed.emit()
     
     def _on_pattern_changed(self, index):
@@ -374,7 +374,7 @@ class CaseEditor(QWidget):
                 if output_configs:
                     config.device_outputs.append((device_id, output_configs))
         
-        config.mode = self.mode_combo.currentData() or 'momentary'
+        config.mode = self.mode_combo.currentData() or 'track'
         config.timer_on = self.timer_on_spin.value()
         config.timer_delay = self.timer_delay_spin.value()
         config.pattern_preset = self.pattern_combo.currentData() or 'none'

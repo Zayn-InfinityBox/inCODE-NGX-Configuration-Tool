@@ -177,22 +177,30 @@ DEVICES = {
 # POWERCELL Message Encoding
 # =============================================================================
 #
-# POWERCELL NGX 8-byte message format:
+# POWERCELL NGX 8-byte message format (per hardware documentation):
 #
-# Byte 0: bits 0-7 = Track mode outputs 1-8
-# Byte 1: bits 0-1 = Track mode outputs 9-10
-#         bits 2-7 = Soft-start outputs 1-6
-# Byte 2: bits 0-3 = Soft-start outputs 7-10
-#         bits 4-7 = PWM enable outputs 1-4
-# Byte 3: bits 0-3 = PWM enable outputs 5-8
-# Byte 4: upper nibble = Output 1 PWM duty (0-15)
-#         lower nibble = Output 2 PWM duty (0-15)
-# Byte 5: upper nibble = Output 3 PWM duty
-#         lower nibble = Output 4 PWM duty
-# Byte 6: upper nibble = Output 5 PWM duty
-#         lower nibble = Output 6 PWM duty
-# Byte 7: upper nibble = Output 7 PWM duty
-#         lower nibble = Output 8 PWM duty
+# Byte 0 (Track mode outputs 1-8):
+#   Bit 7 = Output 1, Bit 6 = Output 2, ... Bit 0 = Output 8
+#
+# Byte 1:
+#   Bit 7 = Output 9 Track, Bit 6 = Output 10 Track
+#   Bit 5 = Output 1 Soft-start, Bit 4 = Output 2 Soft-start, ...
+#   Bit 0 = Output 6 Soft-start
+#
+# Byte 2:
+#   Bit 7 = Output 7 Soft-start, Bit 6 = Output 8 Soft-start
+#   Bit 5 = Output 9 Soft-start, Bit 4 = Output 10 Soft-start
+#   Bit 3 = Output 1 PWM, Bit 2 = Output 2 PWM, Bit 1 = Output 3 PWM, Bit 0 = Output 4 PWM
+#
+# Byte 3:
+#   Bit 7 = Output 5 PWM, Bit 6 = Output 6 PWM, Bit 5 = Output 7 PWM, Bit 4 = Output 8 PWM
+#   Bits 3-0 = Reserved
+#
+# Bytes 4-7: 4-bit PWM duty cycle values
+#   Byte 4: Output 1 (upper nibble), Output 2 (lower nibble)
+#   Byte 5: Output 3 (upper nibble), Output 4 (lower nibble)
+#   Byte 6: Output 5 (upper nibble), Output 6 (lower nibble)
+#   Byte 7: Output 7 (upper nibble), Output 8 (lower nibble)
 #
 # Priority: Track > Soft-Start > PWM
 
@@ -230,27 +238,30 @@ def encode_powercell_message(output_configs: Dict[int, OutputConfig]) -> List[in
             continue
         
         if config.mode == OutputMode.TRACK:
-            # Track mode: outputs 1-8 in byte 0, outputs 9-10 in byte 1 bits 0-1
+            # Track mode: outputs 1-8 in byte 0 (bit 7=out1, bit 0=out8)
+            # outputs 9-10 in byte 1 bits 7-6
             if out_num <= 8:
-                data[0] |= (1 << (out_num - 1))
+                data[0] |= (1 << (8 - out_num))  # Output 1 -> bit 7, Output 8 -> bit 0
             else:
-                data[1] |= (1 << (out_num - 9))  # Outputs 9-10 -> bits 0-1
+                data[1] |= (1 << (16 - out_num))  # Output 9 -> bit 7, Output 10 -> bit 6
         
         elif config.mode == OutputMode.SOFT_START:
-            # Soft-start: outputs 1-6 in byte 1 bits 2-7, outputs 7-10 in byte 2 bits 0-3
+            # Soft-start: outputs 1-6 in byte 1 bits 5-0
+            # outputs 7-10 in byte 2 bits 7-4
             if out_num <= 6:
-                data[1] |= (1 << (out_num - 1 + 2))  # Outputs 1-6 -> bits 2-7
+                data[1] |= (1 << (6 - out_num))  # Output 1 -> bit 5, Output 6 -> bit 0
             else:
-                data[2] |= (1 << (out_num - 7))  # Outputs 7-10 -> bits 0-3
+                data[2] |= (1 << (14 - out_num))  # Output 7 -> bit 7, Output 10 -> bit 4
         
         elif config.mode == OutputMode.PWM:
-            # PWM enable: outputs 1-4 in byte 2 bits 4-7, outputs 5-8 in byte 3 bits 0-3
+            # PWM enable: outputs 1-4 in byte 2 bits 3-0
+            # outputs 5-8 in byte 3 bits 7-4
             duty = max(0, min(15, config.pwm_duty))
             
             if out_num <= 4:
-                data[2] |= (1 << (out_num - 1 + 4))  # Enable bits 4-7
+                data[2] |= (1 << (4 - out_num))  # Output 1 -> bit 3, Output 4 -> bit 0
             elif out_num <= 8:
-                data[3] |= (1 << (out_num - 5))  # Enable bits 0-3
+                data[3] |= (1 << (12 - out_num))  # Output 5 -> bit 7, Output 8 -> bit 4
             # Note: PWM doesn't support outputs 9-10
             
             # PWM duty cycle in bytes 4-7
@@ -285,33 +296,33 @@ def decode_powercell_message(data: List[int]) -> Dict[int, OutputConfig]:
         
         # Check Track mode first (highest priority)
         if out_num <= 8:
-            if data[0] & (1 << (out_num - 1)):
+            if data[0] & (1 << (8 - out_num)):
                 config.enabled = True
                 config.mode = OutputMode.TRACK
         else:
-            if data[1] & (1 << (out_num - 9)):
+            if data[1] & (1 << (16 - out_num)):
                 config.enabled = True
                 config.mode = OutputMode.TRACK
         
         # Check Soft-start if not Track
         if not config.enabled:
             if out_num <= 6:
-                if data[1] & (1 << (out_num - 1 + 2)):
+                if data[1] & (1 << (6 - out_num)):
                     config.enabled = True
                     config.mode = OutputMode.SOFT_START
             elif out_num <= 10:
-                if data[2] & (1 << (out_num - 7)):
+                if data[2] & (1 << (14 - out_num)):
                     config.enabled = True
                     config.mode = OutputMode.SOFT_START
         
         # Check PWM if not Track or Soft-start
         if not config.enabled and out_num <= 8:
             if out_num <= 4:
-                if data[2] & (1 << (out_num - 1 + 4)):
+                if data[2] & (1 << (4 - out_num)):
                     config.enabled = True
                     config.mode = OutputMode.PWM
             else:
-                if data[3] & (1 << (out_num - 5)):
+                if data[3] & (1 << (12 - out_num)):
                     config.enabled = True
                     config.mode = OutputMode.PWM
             
@@ -332,11 +343,31 @@ def encode_inmotion_message(output_configs: Dict[int, OutputConfig]) -> List[int
     """
     Encode inMOTION output configurations into 8-byte CAN message.
     
-    inMOTION outputs:
-    - 1-4: Relay outputs (1A, 1B, 2A, 2B)
-    - 5-8: Regular outputs (Output 1-4)
+    inMOTION Message Format (per byte):
+    - Bit 0: Modifier bit (1 = change output, 0 = ignore)
+    - Bit 1: Unused
+    - Bits 2-3: Output Personality (00=OFF, 01=ON, 10=ON, 11=Express for relays)
+    - Bits 4-7: Timer Value (each count = 0.25 sec)
     
-    Simple bit mapping: output N is bit (N-1) in byte 0
+    Byte assignments:
+    - Byte 0: Relay 1A
+    - Byte 1: Relay 1B
+    - Byte 2: Relay 2A
+    - Byte 3: Relay 2B
+    - Byte 4: Mosfet 1 (Output 1)
+    - Byte 5: Mosfet 2 (Output 2)
+    - Byte 6: Mosfet 3 (Output 3)
+    - Byte 7: Mosfet 4 (Output 4)
+    
+    Output mapping:
+    - 1 = Relay 1A (byte 0)
+    - 2 = Relay 1B (byte 1)
+    - 3 = Relay 2A (byte 2)
+    - 4 = Relay 2B (byte 3)
+    - 5 = Mosfet 1 (byte 4)
+    - 6 = Mosfet 2 (byte 5)
+    - 7 = Mosfet 3 (byte 6)
+    - 8 = Mosfet 4 (byte 7)
     """
     data = [0, 0, 0, 0, 0, 0, 0, 0]
     
@@ -345,7 +376,11 @@ def encode_inmotion_message(output_configs: Dict[int, OutputConfig]) -> List[int
             continue
         
         if 1 <= out_num <= 8:
-            data[0] |= (1 << (out_num - 1))
+            byte_idx = out_num - 1
+            # Modifier bit = 1 (change output)
+            # Personality = 01 (ON) in bits 2-3
+            # Timer = 0 for now
+            data[byte_idx] = 0x05  # 0b00000101 = modifier=1, personality=01 (ON)
     
     return data
 
@@ -390,28 +425,28 @@ INPUTS = [
     InputDefinition(21, "AUX Input 05", "AUX 05", "ground", "A", 21),
     InputDefinition(22, "AUX Input 06", "AUX 06", "ground", "A", 22),
     # Connector A - High Side (HSIN01-HSIN02)
-    InputDefinition(23, "Cooling Fan (HS)", "Cooling Fan HS", "high_side", "A", 23),
-    InputDefinition(24, "Fuel Pump (HS)", "Fuel Pump HS", "high_side", "A", 24),
-    # Connector B - Ground Switched (IN23-IN38)
-    InputDefinition(25, "AUX Input B01", "AUX B01", "ground", "B", 1),
-    InputDefinition(26, "AUX Input B02", "AUX B02", "ground", "B", 2),
-    InputDefinition(27, "AUX Input B03", "AUX B03", "ground", "B", 3),
-    InputDefinition(28, "AUX Input B04", "AUX B04", "ground", "B", 4),
-    InputDefinition(29, "AUX Input B05", "AUX B05", "ground", "B", 5),
-    InputDefinition(30, "AUX Input B06", "AUX B06", "ground", "B", 6),
-    InputDefinition(31, "AUX Input B07", "AUX B07", "ground", "B", 7),
-    InputDefinition(32, "AUX Input B08", "AUX B08", "ground", "B", 8),
-    InputDefinition(33, "AUX Input B09", "AUX B09", "ground", "B", 9),
-    InputDefinition(34, "AUX Input B10", "AUX B10", "ground", "B", 10),
-    InputDefinition(35, "AUX Input B11", "AUX B11", "ground", "B", 11),
-    InputDefinition(36, "AUX Input B12", "AUX B12", "ground", "B", 12),
-    InputDefinition(37, "AUX Input B13", "AUX B13", "ground", "B", 13),
-    InputDefinition(38, "AUX Input B14", "AUX B14", "ground", "B", 14),
-    # Connector B - High Side (HSIN03-HSIN06)
-    InputDefinition(39, "AUX Input HS03", "AUX HS03", "high_side", "B", 17),
-    InputDefinition(40, "AUX Input HS04", "AUX HS04", "high_side", "B", 18),
-    InputDefinition(41, "AUX Input HS05", "AUX HS05", "high_side", "B", 19),
-    InputDefinition(42, "AUX Input HS06", "AUX HS06", "high_side", "B", 20),
+    InputDefinition(23, "Door Lock", "Door Lock", "ground", "B", 1),
+    InputDefinition(24, "Door Unlock", "Door Unlock", "ground", "B", 2),
+    # Connector B - Ground Switched (IN25-IN38 in C code)
+    InputDefinition(25, "Window DF Up", "Win DF Up", "ground", "B", 3),
+    InputDefinition(26, "Window PF Up", "Win PF Up", "ground", "B", 4),
+    InputDefinition(27, "Window DR Up", "Win DR Up", "ground", "B", 5),
+    InputDefinition(28, "Window PR Up", "Win PR Up", "ground", "B", 6),
+    InputDefinition(29, "Window DF Down", "Win DF Down", "ground", "B", 7),
+    InputDefinition(30, "Window PF Down", "Win PF Down", "ground", "B", 8),
+    InputDefinition(31, "Window DR Down", "Win DR Down", "ground", "B", 9),
+    InputDefinition(32, "Window PR Down", "Win PR Down", "ground", "B", 10),
+    InputDefinition(33, "AUX Input B09", "AUX B09", "ground", "B", 11),
+    InputDefinition(34, "AUX Input B10", "AUX B10", "ground", "B", 12),
+    InputDefinition(35, "AUX Input B11", "AUX B11", "ground", "B", 13),
+    InputDefinition(36, "AUX Input B12", "AUX B12", "ground", "B", 14),
+    InputDefinition(37, "AUX Input B13", "AUX B13", "ground", "B", 15),
+    InputDefinition(38, "AUX Input B14", "AUX B14", "ground", "B", 16),
+    # High Side Inputs (HSIN01-HSIN06)
+    InputDefinition(39, "Cooling Fan (HS)", "HS Cooling", "high_side", "A", 23),
+    InputDefinition(40, "Fuel Pump (HS)", "HS Fuel", "high_side", "A", 24),
+    InputDefinition(41, "AUX Input HS03", "AUX HS03", "high_side", "B", 17),
+    InputDefinition(42, "AUX Input HS04", "AUX HS04", "high_side", "B", 18),
     # Analog/Pulse inputs (virtual input numbers for condition tracking)
     InputDefinition(43, "Tach Input", "Tachometer", "pulse", "B", 26),
     InputDefinition(44, "VSS Input", "Speed Sensor", "pulse", "B", 27),
@@ -437,7 +472,7 @@ class CaseConfig:
     # Device outputs configuration - list of (device_id, output_configs) tuples
     device_outputs: List[Tuple[str, Dict[int, OutputConfig]]] = field(default_factory=list)
     # Behavior flags
-    mode: str = "momentary"  # momentary, toggle, timed
+    mode: str = "track"  # track, toggle, timed
     timer_on: int = 0        # 0-255, each count = 500ms
     timer_delay: int = 0     # 0-255, each count = 500ms
     pattern_preset: str = "none"

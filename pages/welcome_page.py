@@ -3,6 +3,7 @@ welcome_page.py - Welcome/preset selection page with glassmorphism design
 """
 
 import os
+import sys
 import json
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -14,6 +15,20 @@ from PyQt6.QtGui import QFont, QColor
 
 from styles import COLORS
 from config_data import FullConfiguration, DEVICES, OutputConfig, OutputMode, CaseConfig
+
+
+def get_resource_path(relative_path: str) -> str:
+    """
+    Get the absolute path to a resource, works for dev and PyInstaller bundle.
+    """
+    if hasattr(sys, '_MEIPASS'):
+        # Running in PyInstaller bundle
+        base_path = sys._MEIPASS
+    else:
+        # Running in normal Python environment
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    return os.path.join(base_path, relative_path)
 
 
 class PresetCard(QFrame):
@@ -115,12 +130,13 @@ class PresetCard(QFrame):
 class WelcomePage(QWidget):
     """Welcome page with preset selection and file upload - Glass style"""
     
-    config_loaded = pyqtSignal(object)  # Emits FullConfiguration
+    config_loaded = pyqtSignal(object, bool)  # Emits (FullConfiguration, is_preset)
     
     def __init__(self, config: FullConfiguration, parent=None):
         super().__init__(parent)
         self.config = config
         self.selected_preset = None
+        self.loaded_file_path = None  # Path to uploaded config file
         self.preset_cards = {}
         self._setup_ui()
     
@@ -215,51 +231,120 @@ class WelcomePage(QWidget):
         layout.addStretch()
     
     def _on_preset_selected(self, preset_id: str):
-        """Handle preset card selection"""
+        """Handle preset card selection - just updates visual state, doesn't load yet"""
         self.selected_preset = preset_id
+        self.loaded_file_path = None  # Clear any previously loaded file
         
         # Update card selection state
         for card_id, card in self.preset_cards.items():
             card.set_selected(card_id == preset_id)
         
-        # Load preset configuration
+        # Update status label to show selection (not loaded yet)
         if preset_id == "front_engine":
-            self.config = self._create_front_engine_preset()
-            self.status_label.setText("✓ Front Engine preset loaded")
+            self.status_label.setText("Front Engine selected")
         elif preset_id == "rear_engine":
-            self.config = self._create_rear_engine_preset()
-            self.status_label.setText("✓ Rear Engine preset loaded")
+            self.status_label.setText("Rear Engine selected")
         
+        self.status_label.setStyleSheet(f"""
+            color: {COLORS['accent_primary']};
+            font-size: 15px;
+            font-weight: 600;
+            padding: 16px 32px;
+            background-color: rgba(59, 130, 246, 0.2);
+            border-radius: 20px;
+            border: none;
+        """)
         self.status_label.setVisible(True)
-        self.config_loaded.emit(self.config)
     
     def _on_upload_clicked(self, preset_id: str):
         """Handle upload card click"""
         self._upload_config()
     
+    def _load_preset_file(self, preset_name: str) -> FullConfiguration:
+        """Load preset configuration from JSON file"""
+        # Find the presets directory (works in dev and PyInstaller bundle)
+        preset_path = get_resource_path(os.path.join("presets", f"{preset_name}.json"))
+        
+        try:
+            with open(preset_path, 'r') as f:
+                preset_data = json.load(f)
+            
+            # Create configuration from preset data
+            config = FullConfiguration()
+            
+            # Load system config
+            if 'system' in preset_data:
+                for key, value in preset_data['system'].items():
+                    if hasattr(config.system, key):
+                        setattr(config.system, key, value)
+            
+            # Load input configs
+            if 'inputs' in preset_data:
+                for input_data in preset_data['inputs']:
+                    input_num = input_data.get('input_number', 0)
+                    if 1 <= input_num <= 44:
+                        idx = input_num - 1
+                        config.inputs[idx].custom_name = input_data.get('custom_name', '')
+                        
+                        # Load ON cases
+                        for j, case_data in enumerate(input_data.get('on_cases', [])):
+                            if j < 8:
+                                self._load_case_data(config.inputs[idx].on_cases[j], case_data)
+                        
+                        # Load OFF cases
+                        for j, case_data in enumerate(input_data.get('off_cases', [])):
+                            if j < 2:
+                                self._load_case_data(config.inputs[idx].off_cases[j], case_data)
+            
+            return config
+            
+        except FileNotFoundError:
+            print(f"Preset file not found: {preset_path}")
+            return FullConfiguration()
+        except Exception as e:
+            print(f"Error loading preset: {e}")
+            return FullConfiguration()
+    
+    def _load_case_data(self, case: CaseConfig, case_data: dict):
+        """Load case configuration from dict"""
+        case.enabled = case_data.get('enabled', False)
+        case.mode = case_data.get('mode', 'track')
+        case.timer_on = case_data.get('timer_on', 0)
+        case.timer_delay = case_data.get('timer_delay', 0)
+        case.pattern_preset = case_data.get('pattern_preset', 'none')
+        case.pattern_on_time = case_data.get('pattern_on_time', 0)
+        case.pattern_off_time = case_data.get('pattern_off_time', 0)
+        case.set_ignition = case_data.get('set_ignition', False)
+        case.must_be_on = case_data.get('must_be_on', [])
+        case.must_be_off = case_data.get('must_be_off', [])
+        
+        # Load device outputs
+        case.device_outputs = []
+        for device_output in case_data.get('device_outputs', []):
+            if len(device_output) == 2:
+                device_id = device_output[0]
+                outputs_dict = device_output[1]
+                # Convert output configs
+                output_configs = {}
+                for out_num_str, out_data in outputs_dict.items():
+                    out_num = int(out_num_str)
+                    output_configs[out_num] = OutputConfig(
+                        enabled=out_data.get('enabled', False),
+                        mode=OutputMode(out_data.get('mode', 0)),
+                        pwm_duty=out_data.get('pwm_duty', 0)
+                    )
+                case.device_outputs.append((device_id, output_configs))
+    
     def _create_front_engine_preset(self) -> FullConfiguration:
         """Create front engine configuration preset"""
-        config = FullConfiguration()
-        
-        # Input 1: Ignition
-        ignition_case = CaseConfig(enabled=True, mode="toggle")
-        ignition_case.set_ignition = True
-        config.inputs[0].on_cases[0] = ignition_case
-        
-        return config
+        return self._load_preset_file("front_engine")
     
     def _create_rear_engine_preset(self) -> FullConfiguration:
         """Create rear engine configuration preset"""
-        config = FullConfiguration()
-        
-        ignition_case = CaseConfig(enabled=True, mode="toggle")
-        ignition_case.set_ignition = True
-        config.inputs[0].on_cases[0] = ignition_case
-        
-        return config
+        return self._load_preset_file("rear_engine")
     
     def _upload_config(self):
-        """Upload existing configuration file"""
+        """Upload existing configuration file - just stores the path, doesn't load yet"""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Configuration File",
@@ -268,29 +353,95 @@ class WelcomePage(QWidget):
         )
         
         if file_path:
+            # Just store the path and update visual state
+            self.loaded_file_path = file_path
+            self.selected_preset = "upload"
+            
+            # Update selection
+            for card_id, card in self.preset_cards.items():
+                card.set_selected(card_id == "upload")
+            
+            filename = os.path.basename(file_path)
+            self.status_label.setText(f"File selected: {filename}")
+            self.status_label.setStyleSheet(f"""
+                color: {COLORS['accent_primary']};
+                font-size: 15px;
+                font-weight: 600;
+                padding: 16px 32px;
+                background-color: rgba(59, 130, 246, 0.2);
+                border-radius: 20px;
+                border: none;
+            """)
+            self.status_label.setVisible(True)
+    
+    def load_selected_config(self) -> tuple:
+        """
+        Actually load the selected configuration when Next is pressed.
+        Returns (FullConfiguration, is_preset) tuple, or (None, False) if nothing selected.
+        """
+        if self.selected_preset == "front_engine":
+            self.config = self._load_preset_file("front_engine")
+            self.status_label.setText("✓ Front Engine preset loaded")
+            self.status_label.setStyleSheet(f"""
+                color: {COLORS['success']};
+                font-size: 15px;
+                font-weight: 600;
+                padding: 16px 32px;
+                background-color: rgba(16, 185, 129, 0.2);
+                border-radius: 20px;
+                border: none;
+            """)
+            return (self.config, True)
+        
+        elif self.selected_preset == "rear_engine":
+            self.config = self._load_preset_file("rear_engine")
+            self.status_label.setText("✓ Rear Engine preset loaded")
+            self.status_label.setStyleSheet(f"""
+                color: {COLORS['success']};
+                font-size: 15px;
+                font-weight: 600;
+                padding: 16px 32px;
+                background-color: rgba(16, 185, 129, 0.2);
+                border-radius: 20px;
+                border: none;
+            """)
+            return (self.config, True)
+        
+        elif self.selected_preset == "upload" and self.loaded_file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(self.loaded_file_path, 'r') as f:
                     json_str = f.read()
                 
                 self.config = FullConfiguration.from_json(json_str)
-                
-                # Update selection
-                for card_id, card in self.preset_cards.items():
-                    card.set_selected(card_id == "upload")
-                self.selected_preset = "upload"
-                
-                filename = os.path.basename(file_path)
+                filename = os.path.basename(self.loaded_file_path)
                 self.status_label.setText(f"✓ Loaded: {filename}")
-                self.status_label.setVisible(True)
-                self.config_loaded.emit(self.config)
+                self.status_label.setStyleSheet(f"""
+                    color: {COLORS['success']};
+                    font-size: 15px;
+                    font-weight: 600;
+                    padding: 16px 32px;
+                    background-color: rgba(16, 185, 129, 0.2);
+                    border-radius: 20px;
+                    border: none;
+                """)
+                return (self.config, False)
                 
             except Exception as e:
                 QMessageBox.critical(self, "Error", 
                     f"Failed to load configuration:\n{str(e)}")
+                return (None, False)
+        
+        # Nothing selected - return empty config
+        return (FullConfiguration(), False)
+    
+    def has_selection(self) -> bool:
+        """Check if user has made a selection"""
+        return self.selected_preset is not None
     
     def reset(self):
         """Reset page to initial state"""
         self.selected_preset = None
+        self.loaded_file_path = None
         for card in self.preset_cards.values():
             card.set_selected(False)
         self.status_label.setText("")

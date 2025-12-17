@@ -615,7 +615,7 @@ def parse_case_bytes(case_bytes: bytes) -> Optional[CaseConfig]:
     if config_byte & ConfigBits.ONE_BUTTON_START:
         config.mode = 'toggle'
     else:
-        config.mode = 'momentary'
+        config.mode = 'track'
     
     # Parse pattern timing
     timing = case_bytes[CaseOffset.PATTERN_TIMING]

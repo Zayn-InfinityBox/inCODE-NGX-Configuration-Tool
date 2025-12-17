@@ -1,0 +1,6593 @@
+{
+  "system": {
+    "bitrate": 1,
+    "loss_of_com_timer": 30,
+    "rebroadcast_mode": 1,
+    "heartbeat_pgn_high": 255,
+    "heartbeat_pgn_low": 0,
+    "heartbeat_sa": 128,
+    "write_pgn_high": 255,
+    "write_pgn_low": 16,
+    "write_sa": 128,
+    "read_pgn_high": 255,
+    "read_pgn_low": 32,
+    "read_sa": 128,
+    "response_pgn_high": 255,
+    "response_pgn_low": 48,
+    "response_sa": 128,
+    "diagnostic_pgn_high": 255,
+    "diagnostic_pgn_low": 64,
+    "diagnostic_sa": 128,
+    "serial_number": 66
+  },
+  "inputs": [
+    {
+      "input_number": 1,
+      "custom_name": "Ignition",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": true,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 2,
+      "custom_name": "Starter",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [
+            16
+          ],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 3,
+      "custom_name": "Left Turn",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 3,
+          "pattern_off_time": 3,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 3,
+          "pattern_off_time": 3,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 4,
+      "custom_name": "Right Turn",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 3,
+          "pattern_off_time": 3,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 3,
+          "pattern_off_time": 3,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 5,
+      "custom_name": "Head Lights",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "5": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 6,
+      "custom_name": "Parking Lights",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "6": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "6": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 7,
+      "custom_name": "High Beams",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "7": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 8,
+      "custom_name": "4-Ways",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                },
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 3,
+          "pattern_off_time": 3,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                },
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 3,
+          "pattern_off_time": 3,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 9,
+      "custom_name": "Horn",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "9": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 10,
+      "custom_name": "Cooling Fan",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "10": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 11,
+      "custom_name": "1-Filament Brake",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                },
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 12,
+      "custom_name": "Multi-Filament Brake",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 13,
+      "custom_name": "Fuel Pump",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "10": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 14,
+      "custom_name": "Alt Headlight",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 15,
+      "custom_name": "One-Button Start",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": true,
+          "must_be_on": [
+            16
+          ],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "7": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 30,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [
+            16
+          ],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 16,
+      "custom_name": "Neutral Safety",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 17,
+      "custom_name": "Backup Lights",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "5": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 18,
+      "custom_name": "Interior Lights",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 19,
+      "custom_name": "AUX 01",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "8": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 20,
+      "custom_name": "AUX 02",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "7": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 21,
+      "custom_name": "AUX 03",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "8": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 22,
+      "custom_name": "AUX 04",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "9": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 23,
+      "custom_name": "Door Lock",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 24,
+      "custom_name": "Door Unlock",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 25,
+      "custom_name": "Window DF Up",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 26,
+      "custom_name": "Window PF Up",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 27,
+      "custom_name": "Window DR Up",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 28,
+      "custom_name": "Window PR Up",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 29,
+      "custom_name": "Window DF Down",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 30,
+      "custom_name": "Window PF Down",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 31,
+      "custom_name": "Window DR Down",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 32,
+      "custom_name": "Window PR Down",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 33,
+      "custom_name": "AUX B01",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 34,
+      "custom_name": "AUX B02",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 35,
+      "custom_name": "AUX B03",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 36,
+      "custom_name": "AUX B04",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 37,
+      "custom_name": "AUX B05",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 38,
+      "custom_name": "AUX B06",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 39,
+      "custom_name": "HS Cooling",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_front",
+              {
+                "10": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 40,
+      "custom_name": "HS Fuel",
+      "on_cases": [
+        {
+          "enabled": true,
+          "device_outputs": [
+            [
+              "powercell_rear",
+              {
+                "10": {
+                  "enabled": true,
+                  "mode": 1,
+                  "pwm_duty": 0
+                }
+              }
+            ]
+          ],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 41,
+      "custom_name": "AUX HS05",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 42,
+      "custom_name": "AUX HS06",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 43,
+      "custom_name": "Tachometer",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    },
+    {
+      "input_number": 44,
+      "custom_name": "Speed Sensor",
+      "on_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ],
+      "off_cases": [
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        },
+        {
+          "enabled": false,
+          "device_outputs": [],
+          "mode": "track",
+          "timer_on": 0,
+          "timer_delay": 0,
+          "pattern_preset": "none",
+          "pattern_on_time": 0,
+          "pattern_off_time": 0,
+          "set_ignition": false,
+          "must_be_on": [],
+          "must_be_off": []
+        }
+      ]
+    }
+  ],
+  "name": "Front Engine Configuration",
+  "description": "Standard configuration for front-engine vehicles. Engine accessories (ignition relay, starter, cooling fan) controlled via POWERCELL Front. Lighting and rear accessories via POWERCELL Rear. Window controls via inMOTION units."
+}
