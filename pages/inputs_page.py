@@ -16,7 +16,8 @@ from styles import COLORS, ICONS
 from config_data import (
     INPUTS, InputDefinition, InputConfig, CaseConfig,
     DEVICES, DeviceDefinition, OutputConfig, OutputMode,
-    PATTERN_PRESETS, get_input_definition, FullConfiguration
+    PATTERN_PRESETS, get_input_definition, FullConfiguration,
+    get_case_counts
 )
 
 
@@ -819,6 +820,206 @@ class CaseEditor(QWidget):
         settings_layout.addStretch()
         content_layout.addLayout(settings_layout)
         
+        # Timer/Delay Configuration Section
+        # Each timer byte: Bit 0 = Execution Mode, Bit 1 = Scale, Bits 2-7 = Value (0-63)
+        
+        # Execution mode row (shared between timer and delay)
+        exec_mode_layout = QHBoxLayout()
+        exec_mode_layout.setSpacing(12)
+        
+        exec_label = QLabel("Timer Behavior:")
+        exec_label.setStyleSheet("background: transparent;")
+        exec_label.setToolTip("How timers respond if input changes before completion")
+        exec_mode_layout.addWidget(exec_label)
+        
+        self.timer_exec_mode_combo = QComboBox()
+        self.timer_exec_mode_combo.addItem("Fire-and-Forget", "fire_and_forget")
+        self.timer_exec_mode_combo.addItem("Track Input", "track_input")
+        self.timer_exec_mode_combo.setMinimumWidth(160)
+        self.timer_exec_mode_combo.setMinimumHeight(36)
+        self.timer_exec_mode_combo.setToolTip(
+            "Fire-and-Forget: Timer runs to completion regardless of input state\n"
+            "Track Input: Timer cancels if input turns OFF"
+        )
+        self.timer_exec_mode_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
+        self.timer_exec_mode_combo.currentIndexChanged.connect(lambda: self.changed.emit())
+        exec_mode_layout.addWidget(self.timer_exec_mode_combo)
+        
+        exec_mode_layout.addStretch()
+        content_layout.addLayout(exec_mode_layout)
+        
+        # Timers row
+        timers_layout = QHBoxLayout()
+        timers_layout.setSpacing(12)
+        
+        # Timer Delay (delay before sending ON message)
+        delay_label = QLabel("Delay:")
+        delay_label.setStyleSheet("background: transparent;")
+        delay_label.setToolTip("Delay before sending ON message")
+        timers_layout.addWidget(delay_label)
+        
+        self.timer_delay_spin = QSpinBox()
+        self.timer_delay_spin.setRange(0, 63)
+        self.timer_delay_spin.setValue(0)
+        self.timer_delay_spin.setMinimumWidth(70)
+        self.timer_delay_spin.setMinimumHeight(36)
+        self.timer_delay_spin.setStyleSheet(f"""
+            QSpinBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
+        self.timer_delay_spin.valueChanged.connect(self._update_timer_display)
+        timers_layout.addWidget(self.timer_delay_spin)
+        
+        self.timer_delay_scale_combo = QComboBox()
+        self.timer_delay_scale_combo.addItem("× 0.25s", False)  # False = 0.25s scale
+        self.timer_delay_scale_combo.addItem("× 10s", True)     # True = 10s scale
+        self.timer_delay_scale_combo.setMinimumWidth(90)
+        self.timer_delay_scale_combo.setMinimumHeight(36)
+        self.timer_delay_scale_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
+        self.timer_delay_scale_combo.currentIndexChanged.connect(self._update_timer_display)
+        timers_layout.addWidget(self.timer_delay_scale_combo)
+        
+        self.timer_delay_result = QLabel("= 0s")
+        self.timer_delay_result.setStyleSheet(f"color: {COLORS['text_muted']}; background: transparent;")
+        self.timer_delay_result.setMinimumWidth(80)
+        timers_layout.addWidget(self.timer_delay_result)
+        
+        timers_layout.addSpacing(24)
+        
+        # Timer On (how long ON state lasts)
+        timer_on_label = QLabel("Duration:")
+        timer_on_label.setStyleSheet("background: transparent;")
+        timer_on_label.setToolTip("How long to stay ON before auto-OFF (0=indefinite)")
+        timers_layout.addWidget(timer_on_label)
+        
+        self.timer_on_spin = QSpinBox()
+        self.timer_on_spin.setRange(0, 63)
+        self.timer_on_spin.setValue(0)
+        self.timer_on_spin.setMinimumWidth(70)
+        self.timer_on_spin.setMinimumHeight(36)
+        self.timer_on_spin.setStyleSheet(f"""
+            QSpinBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
+        self.timer_on_spin.valueChanged.connect(self._update_timer_display)
+        timers_layout.addWidget(self.timer_on_spin)
+        
+        self.timer_on_scale_combo = QComboBox()
+        self.timer_on_scale_combo.addItem("× 0.25s", False)  # False = 0.25s scale
+        self.timer_on_scale_combo.addItem("× 10s", True)     # True = 10s scale
+        self.timer_on_scale_combo.setMinimumWidth(90)
+        self.timer_on_scale_combo.setMinimumHeight(36)
+        self.timer_on_scale_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(55, 55, 55, 0.95);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+            }}
+        """)
+        self.timer_on_scale_combo.currentIndexChanged.connect(self._update_timer_display)
+        timers_layout.addWidget(self.timer_on_scale_combo)
+        
+        self.timer_on_result = QLabel("= 0s")
+        self.timer_on_result.setStyleSheet(f"color: {COLORS['text_muted']}; background: transparent;")
+        self.timer_on_result.setMinimumWidth(80)
+        timers_layout.addWidget(self.timer_on_result)
+        
+        timers_layout.addStretch()
+        content_layout.addLayout(timers_layout)
+        
+        # Options row (checkboxes for special flags)
+        options_layout = QHBoxLayout()
+        options_layout.setSpacing(20)
+        
+        self.set_ignition_check = QCheckBox("Sets Ignition")
+        self.set_ignition_check.setToolTip("When ON, this case sets the ignition flag variable")
+        self.set_ignition_check.setStyleSheet(f"""
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                spacing: 6px;
+                background: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                background: rgba(70, 70, 70, 0.9);
+            }}
+            QCheckBox::indicator:checked {{
+                background: {COLORS['accent_green']};
+            }}
+        """)
+        self.set_ignition_check.stateChanged.connect(lambda: self.changed.emit())
+        options_layout.addWidget(self.set_ignition_check)
+        
+        self.can_override_check = QCheckBox("Can Be Overridden")
+        self.can_override_check.setToolTip("For single-filament brake lights: allows turn signals to override")
+        self.can_override_check.setStyleSheet(f"""
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                spacing: 6px;
+                background: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                background: rgba(70, 70, 70, 0.9);
+            }}
+            QCheckBox::indicator:checked {{
+                background: {COLORS['accent_orange']};
+            }}
+        """)
+        self.can_override_check.stateChanged.connect(lambda: self.changed.emit())
+        options_layout.addWidget(self.can_override_check)
+        
+        self.require_ignition_check = QCheckBox("Requires Ignition")
+        self.require_ignition_check.setToolTip("Case only activates when ignition is ON")
+        self.require_ignition_check.setStyleSheet(f"""
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                spacing: 6px;
+                background: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                background: rgba(70, 70, 70, 0.9);
+            }}
+            QCheckBox::indicator:checked {{
+                background: {COLORS['accent_blue']};
+            }}
+        """)
+        self.require_ignition_check.stateChanged.connect(lambda: self.changed.emit())
+        options_layout.addWidget(self.require_ignition_check)
+        
+        options_layout.addStretch()
+        content_layout.addLayout(options_layout)
+        
         # Conditions section
         conditions_layout = QHBoxLayout()
         conditions_layout.setSpacing(24)
@@ -957,6 +1158,18 @@ class CaseEditor(QWidget):
             widget.reset()
         self.mode_combo.setCurrentIndex(0)
         self.pattern_combo.setCurrentIndex(0)
+        # Clear timer configuration
+        self.timer_exec_mode_combo.setCurrentIndex(0)  # Fire-and-Forget
+        self.timer_delay_spin.setValue(0)
+        self.timer_delay_scale_combo.setCurrentIndex(0)  # 0.25s
+        self.timer_on_spin.setValue(0)
+        self.timer_on_scale_combo.setCurrentIndex(0)  # 0.25s
+        self.timer_delay_result.setText("= 0s")
+        self.timer_on_result.setText("= 0s (∞)")
+        # Clear option flags
+        self.set_ignition_check.setChecked(False)
+        self.can_override_check.setChecked(False)
+        self.require_ignition_check.setChecked(False)
         self.must_on_dropdown.clear_selection()
         self.must_off_dropdown.clear_selection()
     
@@ -972,6 +1185,42 @@ class CaseEditor(QWidget):
             else:
                 widget.setVisible(False)
                 widget.reset()  # Reset hidden devices
+        
+        self.changed.emit()
+    
+    def _update_timer_display(self):
+        """Update the calculated timer duration labels"""
+        # Calculate delay duration
+        delay_value = self.timer_delay_spin.value()
+        delay_scale_10s = self.timer_delay_scale_combo.currentData()
+        if delay_scale_10s:
+            delay_seconds = delay_value * 10.0
+        else:
+            delay_seconds = delay_value * 0.25
+        
+        if delay_seconds == 0:
+            self.timer_delay_result.setText("= 0s")
+        elif delay_seconds >= 60:
+            minutes = delay_seconds / 60
+            self.timer_delay_result.setText(f"= {minutes:.1f}m")
+        else:
+            self.timer_delay_result.setText(f"= {delay_seconds:.2g}s")
+        
+        # Calculate timer on duration
+        on_value = self.timer_on_spin.value()
+        on_scale_10s = self.timer_on_scale_combo.currentData()
+        if on_scale_10s:
+            on_seconds = on_value * 10.0
+        else:
+            on_seconds = on_value * 0.25
+        
+        if on_seconds == 0:
+            self.timer_on_result.setText("= 0s (∞)")
+        elif on_seconds >= 60:
+            minutes = on_seconds / 60
+            self.timer_on_result.setText(f"= {minutes:.1f}m")
+        else:
+            self.timer_on_result.setText(f"= {on_seconds:.2g}s")
         
         self.changed.emit()
     
@@ -1005,8 +1254,25 @@ class CaseEditor(QWidget):
             config.device_outputs.append((selected_device_id, output_configs))
         
         # Always save mode and pattern
-        config.mode = self.mode_combo.currentData() or 'momentary'
+        config.mode = self.mode_combo.currentData() or 'track'
         config.pattern_preset = self.pattern_combo.currentData() or 'none'
+        
+        # Save timer configuration
+        # Execution mode (shared between timer and delay)
+        config.timer_execution_mode = self.timer_exec_mode_combo.currentData() or 'fire_and_forget'
+        
+        # Timer On (duration)
+        config.timer_on_value = self.timer_on_spin.value()
+        config.timer_on_scale_10s = self.timer_on_scale_combo.currentData() or False
+        
+        # Timer Delay
+        config.timer_delay_value = self.timer_delay_spin.value()
+        config.timer_delay_scale_10s = self.timer_delay_scale_combo.currentData() or False
+        
+        # Save option flags
+        config.set_ignition = self.set_ignition_check.isChecked()
+        config.can_be_overridden = self.can_override_check.isChecked()
+        config.require_ignition_on = self.require_ignition_check.isChecked()
         
         # Always save conditions
         config.must_be_on = self.must_on_dropdown.get_selected()
@@ -1021,6 +1287,14 @@ class CaseEditor(QWidget):
         self.device_combo.blockSignals(True)
         self.mode_combo.blockSignals(True)
         self.pattern_combo.blockSignals(True)
+        self.timer_exec_mode_combo.blockSignals(True)
+        self.timer_delay_spin.blockSignals(True)
+        self.timer_delay_scale_combo.blockSignals(True)
+        self.timer_on_spin.blockSignals(True)
+        self.timer_on_scale_combo.blockSignals(True)
+        self.set_ignition_check.blockSignals(True)
+        self.can_override_check.blockSignals(True)
+        self.require_ignition_check.blockSignals(True)
         
         try:
             self.enable_check.setChecked(config.enabled)
@@ -1062,6 +1336,35 @@ class CaseEditor(QWidget):
             if idx >= 0:
                 self.pattern_combo.setCurrentIndex(idx)
             
+            # Set timer configuration
+            # Execution mode
+            exec_mode = getattr(config, 'timer_execution_mode', 'fire_and_forget')
+            idx = self.timer_exec_mode_combo.findData(exec_mode)
+            if idx >= 0:
+                self.timer_exec_mode_combo.setCurrentIndex(idx)
+            
+            # Timer Delay
+            self.timer_delay_spin.setValue(getattr(config, 'timer_delay_value', 0))
+            delay_scale_10s = getattr(config, 'timer_delay_scale_10s', False)
+            idx = self.timer_delay_scale_combo.findData(delay_scale_10s)
+            if idx >= 0:
+                self.timer_delay_scale_combo.setCurrentIndex(idx)
+            
+            # Timer On (duration)
+            self.timer_on_spin.setValue(getattr(config, 'timer_on_value', 0))
+            on_scale_10s = getattr(config, 'timer_on_scale_10s', False)
+            idx = self.timer_on_scale_combo.findData(on_scale_10s)
+            if idx >= 0:
+                self.timer_on_scale_combo.setCurrentIndex(idx)
+            
+            # Update timer display labels
+            self._update_timer_labels_only()
+            
+            # Set option flags
+            self.set_ignition_check.setChecked(getattr(config, 'set_ignition', False))
+            self.can_override_check.setChecked(getattr(config, 'can_be_overridden', False))
+            self.require_ignition_check.setChecked(getattr(config, 'require_ignition_on', False))
+            
             self.must_on_dropdown.set_selected(config.must_be_on or [])
             self.must_off_dropdown.set_selected(config.must_be_off or [])
             
@@ -1073,6 +1376,48 @@ class CaseEditor(QWidget):
             self.device_combo.blockSignals(False)
             self.mode_combo.blockSignals(False)
             self.pattern_combo.blockSignals(False)
+            self.timer_exec_mode_combo.blockSignals(False)
+            self.timer_delay_spin.blockSignals(False)
+            self.timer_delay_scale_combo.blockSignals(False)
+            self.timer_on_spin.blockSignals(False)
+            self.timer_on_scale_combo.blockSignals(False)
+            self.set_ignition_check.blockSignals(False)
+            self.can_override_check.blockSignals(False)
+            self.require_ignition_check.blockSignals(False)
+    
+    def _update_timer_labels_only(self):
+        """Update timer display labels without emitting changed signal"""
+        # Calculate delay duration
+        delay_value = self.timer_delay_spin.value()
+        delay_scale_10s = self.timer_delay_scale_combo.currentData()
+        if delay_scale_10s:
+            delay_seconds = delay_value * 10.0
+        else:
+            delay_seconds = delay_value * 0.25
+        
+        if delay_seconds == 0:
+            self.timer_delay_result.setText("= 0s")
+        elif delay_seconds >= 60:
+            minutes = delay_seconds / 60
+            self.timer_delay_result.setText(f"= {minutes:.1f}m")
+        else:
+            self.timer_delay_result.setText(f"= {delay_seconds:.2g}s")
+        
+        # Calculate timer on duration
+        on_value = self.timer_on_spin.value()
+        on_scale_10s = self.timer_on_scale_combo.currentData()
+        if on_scale_10s:
+            on_seconds = on_value * 10.0
+        else:
+            on_seconds = on_value * 0.25
+        
+        if on_seconds == 0:
+            self.timer_on_result.setText("= 0s (∞)")
+        elif on_seconds >= 60:
+            minutes = on_seconds / 60
+            self.timer_on_result.setText(f"= {minutes:.1f}m")
+        else:
+            self.timer_on_result.setText(f"= {on_seconds:.2g}s")
     
     def reset(self):
         """Reset to empty disabled state. Blocks signals to prevent change cascade."""
@@ -1081,6 +1426,14 @@ class CaseEditor(QWidget):
         self.device_combo.blockSignals(True)
         self.mode_combo.blockSignals(True)
         self.pattern_combo.blockSignals(True)
+        self.timer_exec_mode_combo.blockSignals(True)
+        self.timer_delay_spin.blockSignals(True)
+        self.timer_delay_scale_combo.blockSignals(True)
+        self.timer_on_spin.blockSignals(True)
+        self.timer_on_scale_combo.blockSignals(True)
+        self.set_ignition_check.blockSignals(True)
+        self.can_override_check.blockSignals(True)
+        self.require_ignition_check.blockSignals(True)
         
         try:
             self.enable_check.setChecked(False)
@@ -1096,6 +1449,21 @@ class CaseEditor(QWidget):
                 widget.reset()
             self.mode_combo.setCurrentIndex(0)
             self.pattern_combo.setCurrentIndex(0)
+            
+            # Reset timer configuration
+            self.timer_exec_mode_combo.setCurrentIndex(0)  # Fire-and-Forget
+            self.timer_delay_spin.setValue(0)
+            self.timer_delay_scale_combo.setCurrentIndex(0)  # 0.25s
+            self.timer_on_spin.setValue(0)
+            self.timer_on_scale_combo.setCurrentIndex(0)  # 0.25s
+            self.timer_delay_result.setText("= 0s")
+            self.timer_on_result.setText("= 0s (∞)")
+            
+            # Reset option flags
+            self.set_ignition_check.setChecked(False)
+            self.can_override_check.setChecked(False)
+            self.require_ignition_check.setChecked(False)
+            
             self.must_on_dropdown.clear_selection()
             self.must_off_dropdown.clear_selection()
             
@@ -1106,12 +1474,24 @@ class CaseEditor(QWidget):
             self.device_combo.blockSignals(False)
             self.mode_combo.blockSignals(False)
             self.pattern_combo.blockSignals(False)
+            self.timer_exec_mode_combo.blockSignals(False)
+            self.timer_delay_spin.blockSignals(False)
+            self.timer_delay_scale_combo.blockSignals(False)
+            self.timer_on_spin.blockSignals(False)
+            self.timer_on_scale_combo.blockSignals(False)
+            self.set_ignition_check.blockSignals(False)
+            self.can_override_check.blockSignals(False)
+            self.require_ignition_check.blockSignals(False)
 
 
 class InputConfigPanel(QWidget):
     """Configuration panel for selected input"""
     
     changed = pyqtSignal()
+    
+    # Maximum case counts (for creating editors)
+    MAX_ON_CASES = 6
+    MAX_OFF_CASES = 2
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1132,6 +1512,11 @@ class InputConfigPanel(QWidget):
         self.subheader_label.setStyleSheet(f"color: {COLORS['text_secondary']};")
         layout.addWidget(self.subheader_label)
         
+        # Case count info
+        self.case_count_label = QLabel("")
+        self.case_count_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
+        layout.addWidget(self.case_count_label)
+        
         # Custom name
         name_layout = QHBoxLayout()
         name_layout.setSpacing(12)
@@ -1151,46 +1536,75 @@ class InputConfigPanel(QWidget):
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
         self.scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(self.scroll_content)
-        scroll_layout.setSpacing(8)
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_layout.setSpacing(8)
         
-        # ON Cases
-        on_label = QLabel("ON Cases")
-        on_label.setFont(QFont("", 12, QFont.Weight.Bold))
-        on_label.setStyleSheet(f"color: {COLORS['accent_green']};")
-        scroll_layout.addWidget(on_label)
+        # ON Cases section
+        self.on_label = QLabel("ON Cases")
+        self.on_label.setFont(QFont("", 12, QFont.Weight.Bold))
+        self.on_label.setStyleSheet(f"color: {COLORS['accent_green']};")
+        self.scroll_layout.addWidget(self.on_label)
         
         self.on_case_editors = []
-        for i in range(8):
+        for i in range(self.MAX_ON_CASES):
             editor = CaseEditor('on', i)
             editor.changed.connect(self.changed)
             self.on_case_editors.append(editor)
-            scroll_layout.addWidget(editor)
+            self.scroll_layout.addWidget(editor)
         
-        # OFF Cases
-        off_label = QLabel("OFF Cases")
-        off_label.setFont(QFont("", 12, QFont.Weight.Bold))
-        off_label.setStyleSheet(f"color: {COLORS['accent_red']}; margin-top: 16px;")
-        scroll_layout.addWidget(off_label)
+        # OFF Cases section
+        self.off_label = QLabel("OFF Cases")
+        self.off_label.setFont(QFont("", 12, QFont.Weight.Bold))
+        self.off_label.setStyleSheet(f"color: {COLORS['accent_red']}; margin-top: 16px;")
+        self.scroll_layout.addWidget(self.off_label)
         
         self.off_case_editors = []
-        for i in range(2):
+        for i in range(self.MAX_OFF_CASES):
             editor = CaseEditor('off', i)
             editor.changed.connect(self.changed)
             self.off_case_editors.append(editor)
-            scroll_layout.addWidget(editor)
+            self.scroll_layout.addWidget(editor)
         
-        scroll_layout.addStretch()
+        self.scroll_layout.addStretch()
         self.scroll.setWidget(self.scroll_content)
         layout.addWidget(self.scroll)
     
+    def _update_case_visibility(self, input_number: int):
+        """Show/hide case editors based on the input's actual case counts."""
+        on_count, off_count = get_case_counts(input_number)
+        
+        # Update case count label
+        if off_count > 0:
+            self.case_count_label.setText(f"Available: {on_count} ON case(s), {off_count} OFF case(s)")
+        else:
+            self.case_count_label.setText(f"Available: {on_count} ON case(s)")
+        
+        # Show/hide ON case editors
+        for i, editor in enumerate(self.on_case_editors):
+            editor.setVisible(i < on_count)
+            if i >= on_count:
+                editor.reset()  # Clear hidden cases
+        
+        # Show/hide OFF section and editors
+        has_off_cases = off_count > 0
+        self.off_label.setVisible(has_off_cases)
+        
+        for i, editor in enumerate(self.off_case_editors):
+            editor.setVisible(i < off_count)
+            if i >= off_count:
+                editor.reset()  # Clear hidden cases
+    
     def set_input(self, input_def: InputDefinition):
-        """Set the input definition. Just updates labels - set_config handles the rest."""
+        """Set the input definition. Updates labels and case visibility."""
         self.current_input = input_def
         self.header_label.setText(f"Input {input_def.number}: {input_def.name}")
         self.subheader_label.setText(
             f"Type: {input_def.input_type.title()} | Connector {input_def.connector}, Pin {input_def.pin}"
         )
+        
+        # Update which case editors are visible for this input
+        self._update_case_visibility(input_def.number)
+        
         # Note: Don't reset editors here - set_config() will set all values directly
         # This avoids double-updating (reset then set)
     
@@ -1201,11 +1615,15 @@ class InputConfigPanel(QWidget):
         config = InputConfig(input_number=self.current_input.number)
         config.custom_name = self.custom_name_edit.text()
         
-        for i, editor in enumerate(self.on_case_editors):
-            config.on_cases[i] = editor.get_config()
+        # Get case counts for this input
+        on_count, off_count = get_case_counts(self.current_input.number)
         
-        for i, editor in enumerate(self.off_case_editors):
-            config.off_cases[i] = editor.get_config()
+        # Only get configs from visible case editors
+        for i in range(min(on_count, len(self.on_case_editors))):
+            config.on_cases[i] = self.on_case_editors[i].get_config()
+        
+        for i in range(min(off_count, len(self.off_case_editors))):
+            config.off_cases[i] = self.off_case_editors[i].get_config()
         
         return config
     
@@ -1215,12 +1633,16 @@ class InputConfigPanel(QWidget):
         self.custom_name_edit.setText(config.custom_name)
         self.custom_name_edit.blockSignals(False)
         
-        # Set case configs - signals already blocked inside set_config()
-        for i, case_config in enumerate(config.on_cases[:8]):
-            self.on_case_editors[i].set_config(case_config, is_default=is_default)
+        # Get case counts for this input
+        input_number = config.input_number
+        on_count, off_count = get_case_counts(input_number)
         
-        for i, case_config in enumerate(config.off_cases[:2]):
-            self.off_case_editors[i].set_config(case_config, is_default=is_default)
+        # Set case configs for visible editors only
+        for i in range(min(on_count, len(self.on_case_editors), len(config.on_cases))):
+            self.on_case_editors[i].set_config(config.on_cases[i], is_default=is_default)
+        
+        for i in range(min(off_count, len(self.off_case_editors), len(config.off_cases))):
+            self.off_case_editors[i].set_config(config.off_cases[i], is_default=is_default)
 
 
 class InputsPage(QWidget):

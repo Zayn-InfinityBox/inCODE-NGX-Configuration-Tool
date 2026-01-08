@@ -142,8 +142,8 @@ class SerialWorker(QThread):
         self.rx_buffer = ""
         self.mutex = QMutex()
         
-    def connect_port(self, port: str, baudrate: int = 115200) -> bool:
-        """Connect to serial port"""
+    def connect_port(self, port: str, baudrate: int = 115200, can_bitrate: int = 250000) -> bool:
+        """Connect to serial port and initialize GridConnect CAN adapter"""
         try:
             self.serial_port = serial.Serial(
                 port=port,
@@ -154,18 +154,49 @@ class SerialWorker(QThread):
                 timeout=0.1,
                 write_timeout=1.0
             )
+            
+            # Initialize the GridConnect CANUSB device
+            # Must open CAN channel before we can transmit/receive
+            time.sleep(0.2)  # Wait for device to be ready
+            
+            # Close any existing CAN channel
+            self.serial_port.write(b"C\r")
+            time.sleep(0.1)
+            
+            # Set CAN bitrate (250000 for J1939)
+            # GridConnect supports: config speed <bitrate> or S-commands
+            self.serial_port.write(f"config speed {can_bitrate}\r".encode('ascii'))
+            time.sleep(0.1)
+            
+            # Open CAN channel
+            self.serial_port.write(b"O\r")
+            time.sleep(0.1)
+            
+            # Clear any startup messages from buffer
+            if self.serial_port.in_waiting > 0:
+                self.serial_port.read(self.serial_port.in_waiting)
+            
             self.running = True
             self.connection_changed.emit(True)
             return True
         except Exception as e:
             self.error_occurred.emit(f"Connection failed: {str(e)}")
+            if self.serial_port and self.serial_port.is_open:
+                try:
+                    self.serial_port.close()
+                except:
+                    pass
+            self.serial_port = None
             return False
     
     def disconnect_port(self):
-        """Disconnect from serial port"""
+        """Disconnect from serial port and close CAN channel"""
         self.running = False
         if self.serial_port and self.serial_port.is_open:
             try:
+                # Close CAN channel before disconnecting
+                self.serial_port.write(b"C\r")
+                time.sleep(0.1)
                 self.serial_port.close()
             except Exception:
                 pass
@@ -454,9 +485,9 @@ class EEPROMWorker(QThread):
         self.read_data: Dict[int, int] = {}  # address -> value
         
         # Timing parameters (milliseconds)
-        self.inter_message_delay = 15  # 15ms between messages
-        self.response_timeout = 200  # 200ms timeout for response
-        self.retry_count = 3
+        self.inter_message_delay = 10  # 10ms between messages - fast but reliable
+        self.response_timeout = 200   # 200ms timeout for response (usually <50ms)
+        self.retry_count = 3          # 3 retries is sufficient
         
         # Response tracking
         self._waiting_for_response = False
@@ -516,7 +547,7 @@ class EEPROMWorker(QThread):
                         break
                     
                     # Wait before retry
-                    self.msleep(50)
+                    self.msleep(20)
                 
                 if not success:
                     error_msg = f"Failed at address 0x{op.address:04X} after {self.retry_count} retries"
@@ -688,7 +719,8 @@ class ConfigurationManager(QObject):
     
     def _on_read_complete(self, success: bool, message: str):
         if self.worker:
-            data = self.worker.read_data.copy() if success else {}
+            # Always return whatever data we managed to read, even on failure
+            data = self.worker.read_data.copy()
             self.read_complete.emit(success, data)
     
     def _on_write_complete(self, success: bool, message: str):

@@ -86,8 +86,90 @@ EEPROM_ADDR_SERIAL = 0x16
 # Per the J1939 EEPROM protocol: cases start at 0x0022, each case is 32 bytes
 EEPROM_ADDR_INPUT_START = 0x0022  # 34 decimal
 EEPROM_BYTES_PER_CASE = 32  # Each case is 32 bytes
-EEPROM_ON_CASES_PER_INPUT = 8
-EEPROM_OFF_CASES_PER_INPUT = 2
+
+# =============================================================================
+# Case Counts Per Input (from MASTERCELL NGX firmware specification)
+# =============================================================================
+# These define the actual number of ON/OFF cases available for each input
+
+INPUT_ON_CASE_COUNTS = {
+    # Ground-switched inputs (IN01-IN22)
+    1: 4,   # Ignition
+    2: 2,   # Starter
+    3: 4,   # Left Turn
+    4: 4,   # Right Turn
+    5: 2,   # Headlights
+    6: 6,   # Parking Lights
+    7: 1,   # High Beams
+    8: 6,   # 4-Ways
+    9: 1,   # Horn
+    10: 2,  # Cooling Fan
+    11: 2,  # Brake Light - 1 Filament
+    12: 2,  # Brake Light - Multi
+    13: 2,  # Fuel Pump
+    14: 2,  # OPEN
+    15: 6,  # One Button Start
+    16: 2,  # Neutral Safety
+    17: 2,  # Backup Lights
+    18: 6,  # Interior Lights
+    19: 2,  # OPEN
+    20: 2,  # OPEN
+    21: 2,  # OPEN
+    22: 2,  # OPEN
+    # Door inputs (IN23-IN24)
+    23: 6,  # Door Lock
+    24: 6,  # Door Unlock
+    # Window inputs (IN25-IN32)
+    25: 2,  # Driver Front Window Up
+    26: 2,  # Driver Front Window Down
+    27: 2,  # Passenger Front Window Up
+    28: 2,  # Passenger Front Window Down
+    29: 2,  # Driver Rear Window Up
+    30: 2,  # Driver Rear Window Down
+    31: 2,  # Passenger Rear Window Up
+    32: 2,  # Passenger Rear Window Down
+    # Aux inputs (IN33-IN38)
+    33: 1,  # Aux Input 33
+    34: 1,  # Aux Input 34
+    35: 1,  # Aux Input 35
+    36: 1,  # Aux Input 36
+    37: 1,  # Aux Input 37
+    38: 1,  # Aux Input 38
+    # High-side inputs (HSIN01-HSIN06 = inputs 39-44)
+    39: 2,  # HSIN01 - Cooling Fan
+    40: 2,  # HSIN02 - Fuel Pump
+    41: 1,  # HSIN03 - Aux HS Input 3
+    42: 1,  # HSIN04 - Aux HS Input 4
+    43: 1,  # HSIN05 - Aux HS Input 5
+    44: 1,  # HSIN06 - Aux HS Input 6
+}
+
+INPUT_OFF_CASE_COUNTS = {
+    # Ground-switched inputs with OFF cases
+    1: 2,   # Ignition
+    2: 2,   # Starter
+    5: 1,   # Headlights
+    # Window inputs (all have 2 OFF cases)
+    25: 2,  # Driver Front Window Up
+    26: 2,  # Driver Front Window Down
+    27: 2,  # Passenger Front Window Up
+    28: 2,  # Passenger Front Window Down
+    29: 2,  # Driver Rear Window Up
+    30: 2,  # Driver Rear Window Down
+    31: 2,  # Passenger Rear Window Up
+    32: 2,  # Passenger Rear Window Down
+    # All other inputs have 0 OFF cases (not listed)
+}
+
+def get_case_counts(input_number: int) -> tuple:
+    """Get (on_case_count, off_case_count) for an input number."""
+    on_count = INPUT_ON_CASE_COUNTS.get(input_number, 1)
+    off_count = INPUT_OFF_CASE_COUNTS.get(input_number, 0)
+    return (on_count, off_count)
+
+# Legacy constants for backward compatibility
+EEPROM_ON_CASES_PER_INPUT = 8   # Max ON cases (for UI sizing)
+EEPROM_OFF_CASES_PER_INPUT = 2  # Max OFF cases (for UI sizing)
 EEPROM_CASES_PER_INPUT = EEPROM_ON_CASES_PER_INPUT + EEPROM_OFF_CASES_PER_INPUT  # 10
 EEPROM_BYTES_PER_INPUT = EEPROM_BYTES_PER_CASE * EEPROM_CASES_PER_INPUT  # 320 bytes per input
 
@@ -472,18 +554,32 @@ class CaseConfig:
     # Device outputs configuration - list of (device_id, output_configs) tuples
     device_outputs: List[Tuple[str, Dict[int, OutputConfig]]] = field(default_factory=list)
     # Behavior flags
-    mode: str = "track"  # track, toggle, timed
-    timer_on: int = 0        # 0-255, each count = 500ms
-    timer_delay: int = 0     # 0-255, each count = 500ms
+    mode: str = "track"  # track, toggle
+    
+    # Timer/Delay Configuration (2-byte control field)
+    # Each timer/delay byte structure:
+    #   Bit 0: Execution Mode (0 = Fire-and-Forget, 1 = Track Input)
+    #   Bit 1: Time Scaling (0 = 0.25s increments, 1 = 10s increments)
+    #   Bits 2-7: Timer value (0-63)
+    # Note: If both timer and delay are configured, they MUST use same execution mode
+    timer_execution_mode: str = "fire_and_forget"  # "fire_and_forget" or "track_input"
+    timer_on_value: int = 0          # 0-63, duration of ON state
+    timer_on_scale_10s: bool = False  # False = 0.25s increments, True = 10s increments
+    timer_delay_value: int = 0       # 0-63, delay before ON message
+    timer_delay_scale_10s: bool = False  # False = 0.25s increments, True = 10s increments
+    
     pattern_preset: str = "none"
-    pattern_on_time: int = 0   # 0-15, upper nibble
-    pattern_off_time: int = 0  # 0-15, lower nibble
-    set_ignition: bool = False
+    pattern_on_time: int = 0   # 0-15, upper nibble (250ms units)
+    pattern_off_time: int = 0  # 0-15, lower nibble (250ms units)
+    set_ignition: bool = False  # When True, this case sets the ignition flag
+    can_be_overridden: bool = False  # For single-filament brake override by turn signals
     # Conditions
     must_be_on: List[int] = field(default_factory=list)
     must_be_off: List[int] = field(default_factory=list)
-    # Note: Ignition/security conditions are handled via must_be_on/must_be_off
-    # using the special input numbers defined in EEPROM protocol (Byte 5, Bit 5 = ignition)
+    require_ignition_on: bool = False  # Case requires ignition to be ON
+    require_ignition_off: bool = False  # Case requires ignition to be OFF
+    require_security_on: bool = False  # Case requires security to be enabled (in must_be_on)
+    require_security_off: bool = False  # Case requires security to be disabled (in must_be_off)
     
     def get_can_messages(self) -> List[Tuple[int, int, int, List[int]]]:
         """
@@ -516,8 +612,17 @@ class InputConfig:
     """Configuration for a single input with all its cases"""
     input_number: int
     custom_name: str = ""
-    on_cases: List[CaseConfig] = field(default_factory=lambda: [CaseConfig() for _ in range(8)])
-    off_cases: List[CaseConfig] = field(default_factory=lambda: [CaseConfig() for _ in range(2)])
+    on_cases: List[CaseConfig] = field(default_factory=list)
+    off_cases: List[CaseConfig] = field(default_factory=list)
+    
+    def __post_init__(self):
+        """Initialize case lists based on input_number if not provided."""
+        on_count, off_count = get_case_counts(self.input_number)
+        # Only initialize if lists are empty (not already set)
+        if not self.on_cases:
+            self.on_cases = [CaseConfig() for _ in range(on_count)]
+        if not self.off_cases:
+            self.off_cases = [CaseConfig() for _ in range(off_count)]
 
     def get_eeprom_base_address(self) -> int:
         """Calculate the EEPROM base address for this input"""
@@ -590,18 +695,41 @@ class FullConfiguration:
                         if key == 'on_cases':
                             for j, case_data in enumerate(value):
                                 if j < len(config.inputs[i].on_cases):
-                                    for ck, cv in case_data.items():
-                                        if hasattr(config.inputs[i].on_cases[j], ck):
-                                            setattr(config.inputs[i].on_cases[j], ck, cv)
+                                    cls._load_case_from_dict(config.inputs[i].on_cases[j], case_data)
                         elif key == 'off_cases':
                             for j, case_data in enumerate(value):
                                 if j < len(config.inputs[i].off_cases):
-                                    for ck, cv in case_data.items():
-                                        if hasattr(config.inputs[i].off_cases[j], ck):
-                                            setattr(config.inputs[i].off_cases[j], ck, cv)
+                                    cls._load_case_from_dict(config.inputs[i].off_cases[j], case_data)
                         elif hasattr(config.inputs[i], key):
                             setattr(config.inputs[i], key, value)
         return config
+    
+    @staticmethod
+    def _load_case_from_dict(case: 'CaseConfig', case_data: dict):
+        """Load case configuration from dict, properly converting device_outputs"""
+        for ck, cv in case_data.items():
+            if ck == 'device_outputs':
+                # Convert device_outputs to proper format with OutputConfig objects
+                case.device_outputs = []
+                for device_output in cv:
+                    if isinstance(device_output, (list, tuple)) and len(device_output) == 2:
+                        device_id = device_output[0]
+                        outputs_dict = device_output[1]
+                        # Convert output configs from dicts to OutputConfig objects
+                        output_configs = {}
+                        for out_num_str, out_data in outputs_dict.items():
+                            out_num = int(out_num_str)
+                            if isinstance(out_data, dict):
+                                output_configs[out_num] = OutputConfig(
+                                    enabled=out_data.get('enabled', False),
+                                    mode=OutputMode(out_data.get('mode', 0)),
+                                    pwm_duty=out_data.get('pwm_duty', 0)
+                                )
+                            elif isinstance(out_data, OutputConfig):
+                                output_configs[out_num] = out_data
+                        case.device_outputs.append((device_id, output_configs))
+            elif hasattr(case, ck):
+                setattr(case, ck, cv)
 
 
 def get_input_definition(input_number: int) -> Optional[InputDefinition]:

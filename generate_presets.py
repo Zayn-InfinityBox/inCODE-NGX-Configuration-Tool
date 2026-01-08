@@ -51,15 +51,43 @@ def byte_to_outputs(data_byte, byte_index=0):
 
 
 def create_case(device_id, outputs, mode=OutputMode.TRACK, pattern_on=0, pattern_off=0, 
-                must_be_on=None, set_ignition=False, timer_delay=0):
-    """Create a CaseConfig with the specified outputs."""
+                must_be_on=None, set_ignition=False, 
+                timer_on_value=0, timer_on_scale_10s=False,
+                timer_delay_value=0, timer_delay_scale_10s=False,
+                timer_execution_mode="fire_and_forget",
+                can_be_overridden=False, require_ignition=False):
+    """Create a CaseConfig with the specified outputs.
+    
+    Args:
+        device_id: The device to send messages to
+        outputs: List of output numbers to activate
+        mode: OutputMode.TRACK or OutputMode.SOFT_START etc
+        pattern_on: Pattern ON time (0-15, units of 250ms)
+        pattern_off: Pattern OFF time (0-15, units of 250ms)
+        must_be_on: List of input numbers that must be ON
+        set_ignition: If True, this case sets the ignition flag
+        timer_on_value: Duration value (0-63)
+        timer_on_scale_10s: True for 10s increments, False for 0.25s increments
+        timer_delay_value: Delay value (0-63)
+        timer_delay_scale_10s: True for 10s increments, False for 0.25s increments
+        timer_execution_mode: "fire_and_forget" or "track_input"
+        can_be_overridden: If True, allows turn signals to override (for brake lights)
+        require_ignition: If True, case only activates when ignition is ON
+    """
     case = CaseConfig()
     case.enabled = True
     case.mode = "track" if mode == OutputMode.TRACK else "toggle"
     case.pattern_on_time = pattern_on
     case.pattern_off_time = pattern_off
     case.set_ignition = set_ignition
-    case.timer_delay = timer_delay
+    case.can_be_overridden = can_be_overridden
+    case.require_ignition_on = require_ignition
+    # Timer configuration
+    case.timer_execution_mode = timer_execution_mode
+    case.timer_on_value = timer_on_value
+    case.timer_on_scale_10s = timer_on_scale_10s
+    case.timer_delay_value = timer_delay_value
+    case.timer_delay_scale_10s = timer_delay_scale_10s
     case.must_be_on = must_be_on or []
     
     output_configs = {}
@@ -71,7 +99,11 @@ def create_case(device_id, outputs, mode=OutputMode.TRACK, pattern_on=0, pattern
 
 
 def create_multi_device_case(device_outputs_list, pattern_on=0, pattern_off=0,
-                             must_be_on=None, set_ignition=False):
+                             must_be_on=None, set_ignition=False, 
+                             timer_on_value=0, timer_on_scale_10s=False,
+                             timer_delay_value=0, timer_delay_scale_10s=False,
+                             timer_execution_mode="fire_and_forget",
+                             can_be_overridden=False, require_ignition=False):
     """Create a CaseConfig with outputs on multiple devices."""
     case = CaseConfig()
     case.enabled = True
@@ -79,6 +111,14 @@ def create_multi_device_case(device_outputs_list, pattern_on=0, pattern_off=0,
     case.pattern_on_time = pattern_on
     case.pattern_off_time = pattern_off
     case.set_ignition = set_ignition
+    # Timer configuration
+    case.timer_execution_mode = timer_execution_mode
+    case.timer_on_value = timer_on_value
+    case.timer_on_scale_10s = timer_on_scale_10s
+    case.timer_delay_value = timer_delay_value
+    case.timer_delay_scale_10s = timer_delay_scale_10s
+    case.can_be_overridden = can_be_overridden
+    case.require_ignition_on = require_ignition
     case.must_be_on = must_be_on or []
     
     case.device_outputs = []
@@ -199,9 +239,10 @@ def generate_front_engine():
     
     # ===== IN11 - Brake Light (1-Filament, can be overridden by turns) =====
     # C: data[0] = 0xC0 on PGN 0xFF02, config_byte=0x04 -> Outputs 1,2
+    # can_be_overridden=True allows turn signals to override when both are active
     inp = config.inputs[10]
     inp.custom_name = "1-Filament Brake"
-    inp.on_cases[0] = create_case("powercell_rear", [1, 2])
+    inp.on_cases[0] = create_case("powercell_rear", [1, 2], can_be_overridden=True)
     
     # ===== IN12 - Brake Light (Multi-Filament) =====
     # C: data[0] = 0x20 on PGN 0xFF02 -> Output 3
@@ -228,8 +269,14 @@ def generate_front_engine():
     inp.custom_name = "One-Button Start"
     # First case: Enable ignition outputs (Output 3) and trigger flag
     inp.on_cases[0] = create_case("powercell_front", [3], must_be_on=[16], set_ignition=True)
-    # Second case: Starter (Output 7) with delay
-    inp.on_cases[1] = create_case("powercell_front", [7], must_be_on=[16], timer_delay=30)
+    # Second case: Starter (Output 7) with delay before starting, limited duration
+    # timer_delay_value=12 @ 0.25s = 3 second delay before engaging starter
+    # timer_on_value=12 @ 0.25s = starter runs for max 3 seconds then auto-disengages
+    # fire_and_forget: once started, runs full cycle regardless of button state
+    inp.on_cases[1] = create_case("powercell_front", [7], must_be_on=[16], 
+                                   timer_delay_value=12, timer_delay_scale_10s=False,
+                                   timer_on_value=12, timer_on_scale_10s=False,
+                                   timer_execution_mode="fire_and_forget")
     
     # ===== IN16 - Neutral Safety Input =====
     # C: INVALID (this is a condition input, not an output trigger)
@@ -468,10 +515,10 @@ def generate_rear_engine():
     inp.custom_name = "Cooling Fan"
     inp.on_cases[0] = create_case("powercell_front", [10])
     
-    # ===== IN11 - Brake Light 1-Filament (same as front) =====
+    # ===== IN11 - Brake Light 1-Filament (can be overridden by turns) =====
     inp = config.inputs[10]
     inp.custom_name = "1-Filament Brake"
-    inp.on_cases[0] = create_case("powercell_rear", [1, 2])
+    inp.on_cases[0] = create_case("powercell_rear", [1, 2], can_be_overridden=True)
     
     # ===== IN12 - Brake Light Multi (same as front) =====
     inp = config.inputs[11]
@@ -491,7 +538,11 @@ def generate_rear_engine():
     inp = config.inputs[14]
     inp.custom_name = "One-Button Start"
     inp.on_cases[0] = create_case("powercell_front", [3], must_be_on=[16], set_ignition=True)
-    inp.on_cases[1] = create_case("powercell_front", [7], must_be_on=[16], timer_delay=30)
+    # Starter with delay and limited duration (same as front engine)
+    inp.on_cases[1] = create_case("powercell_front", [7], must_be_on=[16], 
+                                   timer_delay_value=12, timer_delay_scale_10s=False,
+                                   timer_on_value=12, timer_on_scale_10s=False,
+                                   timer_execution_mode="fire_and_forget")
     
     # ===== IN16 - Neutral Safety (condition input) =====
     inp = config.inputs[15]

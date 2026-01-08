@@ -286,14 +286,16 @@ class WelcomePage(QWidget):
                         idx = input_num - 1
                         config.inputs[idx].custom_name = input_data.get('custom_name', '')
                         
-                        # Load ON cases
+                        # Load ON cases - check against actual case count
+                        on_case_count = len(config.inputs[idx].on_cases)
                         for j, case_data in enumerate(input_data.get('on_cases', [])):
-                            if j < 8:
+                            if j < on_case_count:
                                 self._load_case_data(config.inputs[idx].on_cases[j], case_data)
                         
-                        # Load OFF cases
+                        # Load OFF cases - check against actual case count
+                        off_case_count = len(config.inputs[idx].off_cases)
                         for j, case_data in enumerate(input_data.get('off_cases', [])):
-                            if j < 2:
+                            if j < off_case_count:
                                 self._load_case_data(config.inputs[idx].off_cases[j], case_data)
             
             return config
@@ -309,14 +311,25 @@ class WelcomePage(QWidget):
         """Load case configuration from dict"""
         case.enabled = case_data.get('enabled', False)
         case.mode = case_data.get('mode', 'track')
-        case.timer_on = case_data.get('timer_on', 0)
-        case.timer_delay = case_data.get('timer_delay', 0)
+        
+        # New timer fields
+        case.timer_execution_mode = case_data.get('timer_execution_mode', 'fire_and_forget')
+        case.timer_on_value = case_data.get('timer_on_value', 0)
+        case.timer_on_scale_10s = case_data.get('timer_on_scale_10s', False)
+        case.timer_delay_value = case_data.get('timer_delay_value', 0)
+        case.timer_delay_scale_10s = case_data.get('timer_delay_scale_10s', False)
+        
         case.pattern_preset = case_data.get('pattern_preset', 'none')
         case.pattern_on_time = case_data.get('pattern_on_time', 0)
         case.pattern_off_time = case_data.get('pattern_off_time', 0)
         case.set_ignition = case_data.get('set_ignition', False)
+        case.can_be_overridden = case_data.get('can_be_overridden', False)
         case.must_be_on = case_data.get('must_be_on', [])
         case.must_be_off = case_data.get('must_be_off', [])
+        case.require_ignition_on = case_data.get('require_ignition_on', False)
+        case.require_ignition_off = case_data.get('require_ignition_off', False)
+        case.require_security_on = case_data.get('require_security_on', False)
+        case.require_security_off = case_data.get('require_security_off', False)
         
         # Load device outputs
         case.device_outputs = []

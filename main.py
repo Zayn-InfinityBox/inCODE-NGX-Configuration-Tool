@@ -244,16 +244,11 @@ class MainWindow(QMainWindow):
     
     def _ensure_directories(self):
         """Create backup and config directories if they don't exist"""
-        # Use appropriate location for data directories
-        if hasattr(sys, '_MEIPASS'):
-            # Running as PyInstaller bundle - use user's home directory
-            app_data_dir = os.path.join(os.path.expanduser("~"), ".incode_ngx_config")
-        else:
-            # Running from source - use source directory
-            app_data_dir = os.path.dirname(os.path.abspath(__file__))
+        # Use visible folder in user's Documents
+        docs_dir = os.path.join(os.path.expanduser("~"), "Documents", "inCODE NGX Configs")
         
-        self.backup_dir = os.path.join(app_data_dir, "backups")
-        self.config_dir = os.path.join(app_data_dir, "configurations")
+        self.backup_dir = os.path.join(docs_dir, "Backups")
+        self.config_dir = os.path.join(docs_dir, "Configurations")
         
         os.makedirs(self.backup_dir, exist_ok=True)
         os.makedirs(self.config_dir, exist_ok=True)
@@ -312,6 +307,14 @@ class MainWindow(QMainWindow):
         save_as_action.setShortcut(QKeySequence("Ctrl+Shift+S"))
         save_as_action.triggered.connect(self._save_configuration_as)
         file_menu.addAction(save_as_action)
+        
+        file_menu.addSeparator()
+        
+        # Test: Read Current Config from device
+        read_config_action = QAction("Read Current Config (Test)...", self)
+        read_config_action.setShortcut(QKeySequence("Ctrl+R"))
+        read_config_action.triggered.connect(self._read_current_config)
+        file_menu.addAction(read_config_action)
         
         file_menu.addSeparator()
         
@@ -390,6 +393,136 @@ class MainWindow(QMainWindow):
                     "Save Failed",
                     f"Failed to save configuration:\n{str(e)}"
                 )
+    
+    def _read_current_config(self):
+        """Test function: Read current config from connected MASTERCELL and save to backup"""
+        from can_interface import ConfigurationManager
+        
+        # Check if we're connected
+        if not self.can_interface.is_connected():
+            QMessageBox.warning(
+                self,
+                "Not Connected",
+                "Please connect to a MASTERCELL device first.\n\n"
+                "Go to the Connection page (Step 2) to establish a connection."
+            )
+            return
+        
+        # Create progress dialog
+        from PyQt6.QtWidgets import QProgressDialog
+        progress = QProgressDialog("Reading EEPROM configuration...", "Cancel", 0, 100, self)
+        progress.setWindowTitle("Read Current Config")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setValue(0)
+        progress.show()
+        
+        # Create config manager for reading
+        self._read_manager = ConfigurationManager(self.can_interface)
+        self._read_progress = progress
+        self._read_data = {}
+        
+        # Connect signals
+        self._read_manager.progress.connect(self._on_read_progress)
+        self._read_manager.read_complete.connect(self._on_read_complete)
+        
+        # Start reading
+        self._read_manager.read_full_configuration()
+    
+    def _on_read_progress(self, current, total, message):
+        """Handle read progress updates"""
+        if hasattr(self, '_read_progress') and self._read_progress:
+            percent = int((current / total) * 100) if total > 0 else 0
+            self._read_progress.setValue(percent)
+            self._read_progress.setLabelText(f"Reading EEPROM: {message}\n({current}/{total})")
+            
+            if self._read_progress.wasCanceled():
+                self._read_manager.cancel()
+    
+    def _on_read_complete(self, success, data):
+        """Handle read completion - decode EEPROM and save as configuration"""
+        if hasattr(self, '_read_progress') and self._read_progress:
+            self._read_progress.close()
+            self._read_progress = None
+        
+        # Even if not fully successful, save whatever data we got
+        if data:
+            from eeprom_protocol import decode_raw_eeprom_to_config
+            
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            status = "complete" if success else "partial"
+            byte_count = len(data)
+            
+            try:
+                # Decode raw EEPROM into a proper configuration
+                decoded_config = decode_raw_eeprom_to_config(data)
+                
+                # Save as a proper configuration JSON (like our presets)
+                config_filename = f"Device_Config_{status}_{timestamp}.json"
+                config_path = os.path.join(self.backup_dir, config_filename)
+                
+                with open(config_path, 'w') as f:
+                    f.write(decoded_config.to_json())
+                
+                # Also save raw EEPROM data for debugging
+                raw_filename = f"Device_Raw_{status}_{timestamp}.json"
+                raw_path = os.path.join(self.backup_dir, raw_filename)
+                
+                import json
+                raw_data = {
+                    "timestamp": timestamp,
+                    "type": "device_backup_raw",
+                    "source": "read_current_config",
+                    "complete": success,
+                    "byte_count": byte_count,
+                    "raw_eeprom": {str(addr): val for addr, val in sorted(data.items())}
+                }
+                
+                with open(raw_path, 'w') as f:
+                    json.dump(raw_data, f, indent=2)
+                
+                # Count configured inputs
+                configured_inputs = sum(
+                    1 for inp in decoded_config.inputs
+                    if any(c.enabled for c in inp.on_cases + inp.off_cases)
+                )
+                
+                if success:
+                    QMessageBox.information(
+                        self,
+                        "Read Complete",
+                        f"✅ Successfully read {byte_count} bytes from EEPROM!\n\n"
+                        f"Found {configured_inputs} configured inputs.\n\n"
+                        f"Configuration saved to:\n{config_filename}\n\n"
+                        f"Raw EEPROM saved to:\n{raw_filename}\n\n"
+                        f"Location: {self.backup_dir}"
+                    )
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Partial Read",
+                        f"⚠️ Read {byte_count} bytes before encountering an error.\n\n"
+                        f"Found {configured_inputs} configured inputs (partial).\n\n"
+                        f"Partial config saved to:\n{config_filename}\n\n"
+                        f"Location: {self.backup_dir}\n\n"
+                        f"The device may have stopped responding. Try again."
+                    )
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                QMessageBox.warning(
+                    self,
+                    "Decode Failed",
+                    f"Read succeeded but failed to decode/save:\n{str(e)}\n\n"
+                    f"Read {byte_count} bytes from device."
+                )
+        else:
+            QMessageBox.critical(
+                self,
+                "Read Failed",
+                "Failed to read configuration from device.\n\n"
+                "Please check the connection and try again."
+            )
     
     def _setup_ui(self):
         central = QWidget()
