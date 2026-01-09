@@ -950,30 +950,49 @@ class CaseEditor(QWidget):
         timers_layout.addStretch()
         content_layout.addLayout(timers_layout)
         
-        # Options row (checkboxes for special flags)
+        # Options row (dropdowns and checkboxes for special flags)
         options_layout = QHBoxLayout()
         options_layout.setSpacing(20)
         
-        self.set_ignition_check = QCheckBox("Sets Ignition")
-        self.set_ignition_check.setToolTip("When ON, this case sets the ignition flag variable")
-        self.set_ignition_check.setStyleSheet(f"""
-            QCheckBox {{
-                color: {COLORS['text_primary']};
-                spacing: 6px;
-                background: transparent;
-            }}
-            QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-                border-radius: 4px;
+        # Ignition Mode dropdown
+        ignition_mode_label = QLabel("Ignition Mode:")
+        ignition_mode_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px;")
+        options_layout.addWidget(ignition_mode_label)
+        
+        self.ignition_mode_combo = QComboBox()
+        self.ignition_mode_combo.setMinimumWidth(140)
+        self.ignition_mode_combo.setStyleSheet(f"""
+            QComboBox {{
                 background: rgba(70, 70, 70, 0.9);
+                color: {COLORS['text_primary']};
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                padding: 4px 8px;
+                font-size: 11px;
             }}
-            QCheckBox::indicator:checked {{
-                background: {COLORS['accent_green']};
+            QComboBox:hover {{
+                border: 1px solid {COLORS['accent_blue']};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 20px;
+            }}
+            QComboBox QAbstractItemView {{
+                background: rgba(50, 50, 50, 0.95);
+                color: {COLORS['text_primary']};
+                selection-background-color: {COLORS['accent_blue']};
             }}
         """)
-        self.set_ignition_check.stateChanged.connect(lambda: self.changed.emit())
-        options_layout.addWidget(self.set_ignition_check)
+        self.ignition_mode_combo.addItem("Normal", "normal")
+        self.ignition_mode_combo.addItem("Sets Ignition", "set_ignition")
+        self.ignition_mode_combo.addItem("Tracks Ignition", "track_ignition")
+        self.ignition_mode_combo.setToolTip(
+            "Normal: No special ignition behavior\n"
+            "Sets Ignition: This input IS the ignition source (typically IN01)\n"
+            "Tracks Ignition: Case auto-activates when ignition is ON"
+        )
+        self.ignition_mode_combo.currentIndexChanged.connect(lambda: self.changed.emit())
+        options_layout.addWidget(self.ignition_mode_combo)
         
         self.can_override_check = QCheckBox("Can Be Overridden")
         self.can_override_check.setToolTip("For single-filament brake lights: allows turn signals to override")
@@ -1167,7 +1186,7 @@ class CaseEditor(QWidget):
         self.timer_delay_result.setText("= 0s")
         self.timer_on_result.setText("= 0s (∞)")
         # Clear option flags
-        self.set_ignition_check.setChecked(False)
+        self.ignition_mode_combo.setCurrentIndex(0)  # Normal
         self.can_override_check.setChecked(False)
         self.require_ignition_check.setChecked(False)
         self.must_on_dropdown.clear_selection()
@@ -1270,7 +1289,8 @@ class CaseEditor(QWidget):
         config.timer_delay_scale_10s = self.timer_delay_scale_combo.currentData() or False
         
         # Save option flags
-        config.set_ignition = self.set_ignition_check.isChecked()
+        config.ignition_mode = self.ignition_mode_combo.currentData() or "normal"
+        config.set_ignition = (config.ignition_mode == "set_ignition")  # Legacy field
         config.can_be_overridden = self.can_override_check.isChecked()
         config.require_ignition_on = self.require_ignition_check.isChecked()
         
@@ -1292,7 +1312,7 @@ class CaseEditor(QWidget):
         self.timer_delay_scale_combo.blockSignals(True)
         self.timer_on_spin.blockSignals(True)
         self.timer_on_scale_combo.blockSignals(True)
-        self.set_ignition_check.blockSignals(True)
+        self.ignition_mode_combo.blockSignals(True)
         self.can_override_check.blockSignals(True)
         self.require_ignition_check.blockSignals(True)
         
@@ -1361,7 +1381,16 @@ class CaseEditor(QWidget):
             self._update_timer_labels_only()
             
             # Set option flags
-            self.set_ignition_check.setChecked(getattr(config, 'set_ignition', False))
+            ignition_mode = getattr(config, 'ignition_mode', 'normal')
+            # Handle legacy set_ignition field
+            if ignition_mode == 'normal' and getattr(config, 'set_ignition', False):
+                ignition_mode = 'set_ignition'
+            idx = self.ignition_mode_combo.findData(ignition_mode)
+            if idx >= 0:
+                self.ignition_mode_combo.setCurrentIndex(idx)
+            else:
+                self.ignition_mode_combo.setCurrentIndex(0)  # Default to Normal
+            
             self.can_override_check.setChecked(getattr(config, 'can_be_overridden', False))
             self.require_ignition_check.setChecked(getattr(config, 'require_ignition_on', False))
             
@@ -1381,7 +1410,7 @@ class CaseEditor(QWidget):
             self.timer_delay_scale_combo.blockSignals(False)
             self.timer_on_spin.blockSignals(False)
             self.timer_on_scale_combo.blockSignals(False)
-            self.set_ignition_check.blockSignals(False)
+            self.ignition_mode_combo.blockSignals(False)
             self.can_override_check.blockSignals(False)
             self.require_ignition_check.blockSignals(False)
     
@@ -1431,7 +1460,7 @@ class CaseEditor(QWidget):
         self.timer_delay_scale_combo.blockSignals(True)
         self.timer_on_spin.blockSignals(True)
         self.timer_on_scale_combo.blockSignals(True)
-        self.set_ignition_check.blockSignals(True)
+        self.ignition_mode_combo.blockSignals(True)
         self.can_override_check.blockSignals(True)
         self.require_ignition_check.blockSignals(True)
         
@@ -1460,7 +1489,7 @@ class CaseEditor(QWidget):
             self.timer_on_result.setText("= 0s (∞)")
             
             # Reset option flags
-            self.set_ignition_check.setChecked(False)
+            self.ignition_mode_combo.setCurrentIndex(0)  # Normal
             self.can_override_check.setChecked(False)
             self.require_ignition_check.setChecked(False)
             
@@ -1479,7 +1508,7 @@ class CaseEditor(QWidget):
             self.timer_delay_scale_combo.blockSignals(False)
             self.timer_on_spin.blockSignals(False)
             self.timer_on_scale_combo.blockSignals(False)
-            self.set_ignition_check.blockSignals(False)
+            self.ignition_mode_combo.blockSignals(False)
             self.can_override_check.blockSignals(False)
             self.require_ignition_check.blockSignals(False)
 

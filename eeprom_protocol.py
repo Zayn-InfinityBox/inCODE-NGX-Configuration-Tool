@@ -79,6 +79,9 @@ CASE_SIZE = 32  # Each case is 32 bytes
 ON_CASES_START = 0x0022   # ON cases: 0x0022 - 0x0D61
 OFF_CASES_START = 0x0D62  # OFF cases: 0x0D62 - 0x0FE1
 
+# EEPROM size limit (dsPIC30F6012A has 4KB EEPROM)
+EEPROM_MAX_ADDRESS = 0x0FFF
+
 # Total inputs (38 regular + 6 high-side = 44)
 TOTAL_INPUTS = 44
 
@@ -160,20 +163,40 @@ class TimerBits(IntEnum):
 # Based on actual C code usage in eeprom_init_front_engine.c
 class ConfigBits(IntEnum):
     """
-    Config Byte Breakdown (from C code analysis):
-    - Bit 0 (0x01): Track ignition flag (sets ignition on)
-    - Bit 2 (0x04): Can be overridden (single filament brake)
-    - Bits 4-5 (0x30): Mode - 0x00=normal, 0x10=one-button start
+    Config Byte Breakdown (from firmware analysis):
     
-    Examples from C code:
-    - IN01 Ignition: 0x01 (track ignition)
+    Bits 0-1 (0x03): Ignition Mode
+      - 0x00: Normal - No special ignition behavior
+      - 0x01: Set Ignition - This input IS the ignition source
+      - 0x02: Track Ignition - Case auto-activates when ignition is ON
+      - 0x03: Reserved
+    
+    Bit 2 (0x04): Can be overridden (single filament brake)
+    
+    Bits 4-5 (0x30): Special Mode
+      - 0x00: Normal
+      - 0x10: One-button start
+      - 0x40: Toggle mode
+    
+    Examples from firmware:
+    - IN01 Ignition: 0x01 (set ignition)
+    - IN07 High Beams with track: 0x02 (track ignition - follows ignition state)
     - IN11 Brake 1-fil: 0x04 (can be overridden)
-    - IN15 One-button: 0x11 (one-button + track ignition)
+    - IN15 One-button: 0x11 (one-button + set ignition)
     """
-    TRACK_IGNITION = 0x01     # Bit 0 - sets ignition flag
-    CAN_BE_OVERRIDDEN = 0x04  # Bit 2 - single filament override
-    MODE_MASK = 0x30          # Bits 4-5
-    ONE_BUTTON_START = 0x10   # Mode value for one-button start
+    # Ignition mode (bits 0-1)
+    IGNITION_MODE_MASK = 0x03      # Bits 0-1
+    IGNITION_NORMAL = 0x00         # No ignition handling
+    IGNITION_SET = 0x01            # This case sets the ignition flag
+    IGNITION_TRACK = 0x02          # Case follows ignition state (auto-on when ignition on)
+    
+    # Legacy alias
+    TRACK_IGNITION = 0x01          # DEPRECATED - use IGNITION_SET
+    
+    CAN_BE_OVERRIDDEN = 0x04       # Bit 2 - single filament override
+    MODE_MASK = 0x30               # Bits 4-5
+    ONE_BUTTON_START = 0x10        # Mode value for one-button start
+    TOGGLE_MODE = 0x40             # Toggle mode (bits 6-7)
 
 
 # =============================================================================
@@ -425,12 +448,27 @@ def case_config_to_eeprom_bytes(case: CaseConfig, input_number: int) -> List[byt
         
         # Byte 4: Config byte
         config_byte = 0
+        
+        # Toggle mode (bits 4-5 or 6-7)
         if case.mode == 'toggle':
             config_byte |= ConfigBits.ONE_BUTTON_START
-        if getattr(case, 'set_ignition', False):
-            config_byte |= ConfigBits.TRACK_IGNITION
+        
+        # Ignition mode (bits 0-1)
+        ignition_mode = getattr(case, 'ignition_mode', 'normal')
+        # Support legacy set_ignition field
+        if ignition_mode == 'normal' and getattr(case, 'set_ignition', False):
+            ignition_mode = 'set_ignition'
+        
+        if ignition_mode == 'set_ignition':
+            config_byte |= ConfigBits.IGNITION_SET
+        elif ignition_mode == 'track_ignition':
+            config_byte |= ConfigBits.IGNITION_TRACK
+        # 'normal' = 0x00, no bits set
+        
+        # Can be overridden (bit 2)
         if getattr(case, 'can_be_overridden', False):
             config_byte |= ConfigBits.CAN_BE_OVERRIDDEN
+        
         case_bytes[CaseOffset.CONFIG_BYTE] = config_byte
         
         # Byte 5: Timer On
@@ -604,6 +642,14 @@ def generate_case_write_operations(
     operations = []
     base_address = get_case_address(input_number, is_on_case, case_index)
     
+    # Skip invalid addresses (negative means case doesn't exist for this input)
+    if base_address < 0:
+        return operations
+    
+    # Skip cases that would exceed EEPROM limit
+    if base_address > EEPROM_MAX_ADDRESS:
+        return operations
+    
     # Get the 32-byte case data
     case_bytes_list = case_config_to_eeprom_bytes(case, input_number)
     
@@ -614,8 +660,12 @@ def generate_case_write_operations(
         case_type = "ON" if is_on_case else "OFF"
         
         for offset, value in enumerate(case_bytes):
+            addr = base_address + offset
+            # Skip individual bytes beyond EEPROM limit
+            if addr > EEPROM_MAX_ADDRESS:
+                break
             operations.append(WriteOperation(
-                address=base_address + offset,
+                address=addr,
                 value=value,
                 description=f"Input {input_number} {case_type} Case {case_index}: byte {offset}"
             ))
@@ -707,11 +757,20 @@ def generate_case_read_operations(
     """Generate read operations for a single case (32 bytes)."""
     operations = []
     base_address = get_case_address(input_number, is_on_case, case_index)
+    
+    # Skip invalid addresses
+    if base_address < 0 or base_address > EEPROM_MAX_ADDRESS:
+        return operations
+    
     case_type = "ON" if is_on_case else "OFF"
     
     for offset in range(CASE_SIZE):
+        addr = base_address + offset
+        # Skip bytes beyond EEPROM limit
+        if addr > EEPROM_MAX_ADDRESS:
+            break
         operations.append(ReadOperation(
-            base_address + offset,
+            addr,
             f"Input {input_number} {case_type} Case {case_index}: byte {offset}"
         ))
     
@@ -839,8 +898,17 @@ def parse_case_bytes(case_bytes: bytes) -> Optional[CaseConfig]:
     else:
         config.mode = 'track'
     
-    # Check track ignition flag (bit 0): 0x01 = track ignition
-    config.set_ignition = bool(config_byte & ConfigBits.TRACK_IGNITION)
+    # Parse ignition mode (bits 0-1)
+    ignition_bits = config_byte & ConfigBits.IGNITION_MODE_MASK
+    if ignition_bits == ConfigBits.IGNITION_SET:
+        config.ignition_mode = 'set_ignition'
+        config.set_ignition = True  # Legacy field
+    elif ignition_bits == ConfigBits.IGNITION_TRACK:
+        config.ignition_mode = 'track_ignition'
+        config.set_ignition = False
+    else:
+        config.ignition_mode = 'normal'
+        config.set_ignition = False
     
     # Check can be overridden flag (bit 2): 0x04 = can be overridden
     config.can_be_overridden = bool(config_byte & ConfigBits.CAN_BE_OVERRIDDEN)

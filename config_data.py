@@ -571,7 +571,14 @@ class CaseConfig:
     pattern_preset: str = "none"
     pattern_on_time: int = 0   # 0-15, upper nibble (250ms units)
     pattern_off_time: int = 0  # 0-15, lower nibble (250ms units)
-    set_ignition: bool = False  # When True, this case sets the ignition flag
+    
+    # Ignition Mode (bits 0-1 of config byte):
+    # "normal" (0x00) - No special ignition behavior, case activates with input
+    # "set_ignition" (0x01) - This input IS the ignition source, sets global ignition_flag
+    # "track_ignition" (0x02) - Case auto-activates when ignition is ON, regardless of input state
+    ignition_mode: str = "normal"  # "normal", "set_ignition", or "track_ignition"
+    set_ignition: bool = False  # DEPRECATED - use ignition_mode="set_ignition" instead
+    
     can_be_overridden: bool = False  # For single-filament brake override by turn signals
     # Conditions
     must_be_on: List[int] = field(default_factory=list)

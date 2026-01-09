@@ -322,7 +322,14 @@ class WelcomePage(QWidget):
         case.pattern_preset = case_data.get('pattern_preset', 'none')
         case.pattern_on_time = case_data.get('pattern_on_time', 0)
         case.pattern_off_time = case_data.get('pattern_off_time', 0)
+        
+        # Load ignition mode (with legacy set_ignition support)
+        case.ignition_mode = case_data.get('ignition_mode', 'normal')
         case.set_ignition = case_data.get('set_ignition', False)
+        # Handle legacy: if ignition_mode is 'normal' but set_ignition is True, upgrade to 'set_ignition'
+        if case.ignition_mode == 'normal' and case.set_ignition:
+            case.ignition_mode = 'set_ignition'
+        
         case.can_be_overridden = case_data.get('can_be_overridden', False)
         case.must_be_on = case_data.get('must_be_on', [])
         case.must_be_off = case_data.get('must_be_off', [])
