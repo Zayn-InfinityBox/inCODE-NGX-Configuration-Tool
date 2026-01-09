@@ -10,14 +10,16 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QStackedWidget, QLabel, QPushButton, QFrame, QProgressBar,
-    QMessageBox, QGraphicsDropShadowEffect, QMenuBar, QMenu, QFileDialog
+    QMessageBox, QGraphicsDropShadowEffect, QMenuBar, QMenu, QFileDialog,
+    QDialog, QLineEdit, QDialogButtonBox, QInputDialog
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QPixmap, QColor, QPalette, QLinearGradient, QPainter, QAction, QKeySequence
+from PyQt6.QtGui import QFont, QPixmap, QColor, QPalette, QLinearGradient, QPainter, QAction, QKeySequence, QActionGroup
 
 from styles import MAIN_STYLESHEET, COLORS, ICONS, BACKGROUND_GRADIENT
 from can_interface import CANInterface
 from config_data import FullConfiguration
+from view_mode import ViewMode, ViewModeManager, view_mode_manager
 
 # Import wizard pages
 from pages.welcome_page import WelcomePage
@@ -323,6 +325,43 @@ class MainWindow(QMainWindow):
         exit_action.setShortcut(QKeySequence.StandardKey.Quit)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
+        
+        # View menu - Mode selection
+        view_menu = menubar.addMenu("View")
+        
+        # Create action group for exclusive selection
+        self.view_mode_group = QActionGroup(self)
+        self.view_mode_group.setExclusive(True)
+        
+        # Basic Mode
+        self.basic_mode_action = QAction("Basic Mode", self)
+        self.basic_mode_action.setCheckable(True)
+        self.basic_mode_action.setStatusTip("Simplified interface for standard installations")
+        self.basic_mode_action.triggered.connect(lambda: self._set_view_mode(ViewMode.BASIC))
+        self.view_mode_group.addAction(self.basic_mode_action)
+        view_menu.addAction(self.basic_mode_action)
+        
+        # Advanced Mode
+        self.advanced_mode_action = QAction("Advanced Mode", self)
+        self.advanced_mode_action.setCheckable(True)
+        self.advanced_mode_action.setChecked(True)  # Default
+        self.advanced_mode_action.setStatusTip("Full feature set for experienced users")
+        self.advanced_mode_action.triggered.connect(lambda: self._set_view_mode(ViewMode.ADVANCED))
+        self.view_mode_group.addAction(self.advanced_mode_action)
+        view_menu.addAction(self.advanced_mode_action)
+        
+        view_menu.addSeparator()
+        
+        # Admin Mode (password protected)
+        self.admin_mode_action = QAction("Admin Mode 🔒", self)
+        self.admin_mode_action.setCheckable(True)
+        self.admin_mode_action.setStatusTip("Full unrestricted access (password required)")
+        self.admin_mode_action.triggered.connect(self._request_admin_mode)
+        self.view_mode_group.addAction(self.admin_mode_action)
+        view_menu.addAction(self.admin_mode_action)
+        
+        # Connect to view mode manager to update menu state
+        view_mode_manager.view_mode_changed.connect(self._on_view_mode_changed)
     
     def _save_configuration(self):
         """Save configuration to the configurations folder with timestamp"""
@@ -629,6 +668,85 @@ class MainWindow(QMainWindow):
         self.welcome_page.config_loaded.connect(self._on_config_loaded)
         self.connection_page.connection_changed.connect(self._on_connection_changed)
         self.write_page.write_complete.connect(self._on_write_complete)
+    
+    # =========================================================================
+    # VIEW MODE METHODS
+    # =========================================================================
+    
+    def _set_view_mode(self, mode: ViewMode):
+        """Set view mode (for Basic and Advanced - no password needed)"""
+        view_mode_manager.set_mode(mode)
+    
+    def _request_admin_mode(self):
+        """Request admin mode - shows password dialog"""
+        # If already in admin mode, just stay there
+        if view_mode_manager.is_admin:
+            return
+        
+        # Show password dialog
+        password, ok = QInputDialog.getText(
+            self,
+            "Admin Mode",
+            "Enter admin password:",
+            QLineEdit.EchoMode.Password
+        )
+        
+        if ok and password:
+            if view_mode_manager.set_mode(ViewMode.ADMIN, password):
+                QMessageBox.information(
+                    self,
+                    "Admin Mode Enabled",
+                    "Admin mode is now active.\n\n"
+                    "You have full access to all settings and features."
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Access Denied",
+                    "Incorrect password.\n\n"
+                    "Admin mode was not enabled."
+                )
+                # Revert the menu selection to current mode
+                self._update_view_mode_menu()
+        else:
+            # User cancelled - revert menu selection
+            self._update_view_mode_menu()
+    
+    def _on_view_mode_changed(self, mode: ViewMode):
+        """Handle view mode change from manager"""
+        self._update_view_mode_menu()
+        self._update_view_mode_indicator()
+        
+        # Notify pages of view mode change
+        # Pages can connect to view_mode_manager.view_mode_changed directly
+        # or we can call methods on them here
+        if hasattr(self.inputs_page, 'on_view_mode_changed'):
+            self.inputs_page.on_view_mode_changed(mode)
+    
+    def _update_view_mode_menu(self):
+        """Update menu checkmarks to match current mode"""
+        mode = view_mode_manager.current_mode
+        self.basic_mode_action.setChecked(mode == ViewMode.BASIC)
+        self.advanced_mode_action.setChecked(mode == ViewMode.ADVANCED)
+        self.admin_mode_action.setChecked(mode == ViewMode.ADMIN)
+    
+    def _update_view_mode_indicator(self):
+        """Update any UI indicators showing current mode"""
+        mode = view_mode_manager.current_mode
+        mode_names = {
+            ViewMode.BASIC: "Basic",
+            ViewMode.ADVANCED: "Advanced", 
+            ViewMode.ADMIN: "Admin"
+        }
+        # Could update a status bar or header indicator here
+        # For now, just update window title
+        base_title = "inCODE NGX Configuration Tool"
+        if mode == ViewMode.ADMIN:
+            self.setWindowTitle(f"{base_title} [ADMIN MODE]")
+        elif mode == ViewMode.BASIC:
+            self.setWindowTitle(f"{base_title} [Basic]")
+        else:
+            self.setWindowTitle(base_title)
     
     def _update_navigation(self):
         """Update navigation based on current page"""

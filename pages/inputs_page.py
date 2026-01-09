@@ -1,5 +1,10 @@
 """
 inputs_page.py - Input configuration page (simplified, no per-input write)
+
+Supports three view modes:
+- BASIC: Simplified interface with scripted presets
+- ADVANCED: Full features with some restrictions  
+- ADMIN: Full unrestricted access
 """
 
 from typing import List
@@ -19,6 +24,53 @@ from config_data import (
     PATTERN_PRESETS, get_input_definition, FullConfiguration,
     get_case_counts
 )
+
+# Import view mode system
+from view_mode import ViewMode, view_mode_manager
+
+
+class NoScrollComboBox(QComboBox):
+    """
+    A QComboBox that ignores scroll wheel events unless it has focus.
+    This prevents accidental value changes when scrolling through the page.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+    
+    def wheelEvent(self, event):
+        # Only process wheel events if the combo box has focus
+        if self.hasFocus():
+            super().wheelEvent(event)
+        else:
+            # Pass the event to the parent (allows page scrolling)
+            event.ignore()
+
+
+class InfoIcon(QLabel):
+    """
+    A small info icon (ⓘ) that displays a tooltip on hover.
+    """
+    def __init__(self, tooltip_text: str, parent=None):
+        super().__init__(parent)
+        self.setText("ⓘ")
+        # Convert newlines to HTML breaks for proper tooltip display
+        html_tooltip = tooltip_text.replace('\n', '<br>')
+        self.setToolTip(f"<html><body style='white-space: pre-wrap;'>{html_tooltip}</body></html>")
+        self.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS['text_secondary']};
+                font-size: 14px;
+                font-weight: bold;
+                padding: 2px 4px;
+                border-radius: 8px;
+            }}
+            QLabel:hover {{
+                color: {COLORS['accent_blue']};
+                background: rgba(100, 150, 255, 0.15);
+            }}
+        """)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
 class MultiSelectDropdown(QWidget):
@@ -295,7 +347,7 @@ class OutputConfigWidget(QWidget):
         mode_card_layout.setSpacing(10)
         
         # Mode dropdown
-        self.mode_combo = QComboBox()
+        self.mode_combo = NoScrollComboBox()
         self.mode_combo.addItem("Track", OutputMode.TRACK)
         self.mode_combo.addItem("Soft-Start", OutputMode.SOFT_START)
         if self.supports_pwm:
@@ -610,6 +662,7 @@ class CaseEditor(QWidget):
         self.is_default = False  # Track if case was loaded from preset
         self._stored_config = None  # Store config when enabled
         self._cached_style_state = None  # Track current style state
+        self._current_view_mode = None  # Current view mode (BASIC/ADVANCED/ADMIN)
         
         # Initialize class-level styles once
         CaseEditor._init_master_styles()
@@ -715,16 +768,19 @@ class CaseEditor(QWidget):
         content_layout.setContentsMargins(16, 8, 16, 16)
         content_layout.setSpacing(16)
         
-        # Device selection row
-        device_row = QHBoxLayout()
+        # Device selection row (hidden in Basic mode)
+        self.device_row_widget = QWidget()
+        device_row = QHBoxLayout(self.device_row_widget)
+        device_row.setContentsMargins(0, 0, 0, 0)
         device_row.setSpacing(12)
         
         device_label = QLabel("Device:")
         device_label.setFont(QFont("", 11, QFont.Weight.Bold))
         device_label.setStyleSheet(f"color: {COLORS['accent_blue']};")
         device_row.addWidget(device_label)
+        device_row.addWidget(InfoIcon("Select which device (POWERCELL, inMOTION) this case will send CAN messages to."))
         
-        self.device_combo = QComboBox()
+        self.device_combo = NoScrollComboBox()
         self.device_combo.addItem("Select a device...", None)
         for device_id, device in DEVICES.items():
             self.device_combo.addItem(f"{device.name}", device_id)
@@ -741,9 +797,9 @@ class CaseEditor(QWidget):
         self.device_combo.currentIndexChanged.connect(self._on_device_changed)
         device_row.addWidget(self.device_combo)
         device_row.addStretch()
-        content_layout.addLayout(device_row)
+        content_layout.addWidget(self.device_row_widget)
         
-        # Outputs container - shows outputs for selected device
+        # Outputs container - shows outputs for selected device (hidden in Basic mode)
         self.outputs_container = QWidget()
         self.outputs_layout = QVBoxLayout(self.outputs_container)
         self.outputs_layout.setSpacing(8)
@@ -759,316 +815,466 @@ class CaseEditor(QWidget):
         
         content_layout.addWidget(self.outputs_container)
         
-        # Separator
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setFixedHeight(1)
-        sep.setStyleSheet(f"background-color: {COLORS['border_default']};")
-        content_layout.addWidget(sep)
+        # Read-only output display (shown in Basic mode instead of device/outputs)
+        self.basic_output_display = QFrame()
+        self.basic_output_display.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(50, 55, 60, 0.8);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 12px;
+            }}
+        """)
+        basic_output_layout = QVBoxLayout(self.basic_output_display)
+        basic_output_layout.setSpacing(6)
+        basic_output_layout.setContentsMargins(12, 10, 12, 10)
         
-        # Settings row - all in one horizontal layout
-        settings_layout = QHBoxLayout()
-        settings_layout.setSpacing(16)
+        basic_output_header = QLabel("CONFIGURED OUTPUT")
+        basic_output_header.setStyleSheet(f"""
+            color: {COLORS['accent_blue']};
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        """)
+        basic_output_layout.addWidget(basic_output_header)
         
-        # Mode label
+        self.basic_output_label = QLabel("No output configured")
+        self.basic_output_label.setStyleSheet(f"""
+            color: {COLORS['text_primary']};
+            font-size: 13px;
+            padding: 4px 0px;
+        """)
+        self.basic_output_label.setWordWrap(True)
+        basic_output_layout.addWidget(self.basic_output_label)
+        
+        self.basic_output_display.setVisible(False)  # Hidden by default (shown in Basic mode)
+        content_layout.addWidget(self.basic_output_display)
+        
+        # =====================================================================
+        # SECTION 1: OUTPUT BEHAVIOR
+        # =====================================================================
+        self.behavior_section = QFrame()
+        self.behavior_section.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(45, 45, 50, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                padding: 8px;
+                margin-top: 8px;
+            }}
+        """)
+        behavior_layout = QVBoxLayout(self.behavior_section)
+        behavior_layout.setSpacing(8)
+        behavior_layout.setContentsMargins(12, 8, 12, 12)
+        
+        # Section header
+        behavior_header = QLabel("OUTPUT BEHAVIOR")
+        behavior_header.setStyleSheet(f"""
+            color: {COLORS['accent_blue']};
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            background: transparent;
+        """)
+        behavior_layout.addWidget(behavior_header)
+        
+        # Mode and Pattern row
+        mode_pattern_row = QHBoxLayout()
+        mode_pattern_row.setSpacing(16)
+        
+        # Mode
         mode_label = QLabel("Mode:")
-        mode_label.setStyleSheet("background: transparent;")
-        settings_layout.addWidget(mode_label)
+        mode_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        mode_pattern_row.addWidget(mode_label)
+        mode_pattern_row.addWidget(InfoIcon(
+            "Track: Output follows input state (ON when input ON, OFF when input OFF)\n"
+            "Toggle: Output toggles with each input press\n"
+            "Timed: Output turns ON for a set duration"
+        ))
         
-        # Mode dropdown with card
-        self.mode_combo = QComboBox()
+        self.mode_combo = NoScrollComboBox()
         self.mode_combo.addItem("Track", "track")
         self.mode_combo.addItem("Toggle", "toggle")
         self.mode_combo.addItem("Timed", "timed")
-        self.mode_combo.setMinimumWidth(130)
-        self.mode_combo.setMinimumHeight(36)
+        self.mode_combo.setMinimumWidth(120)
+        self.mode_combo.setMinimumHeight(32)
         self.mode_combo.setStyleSheet(f"""
             QComboBox {{
-                background-color: rgba(55, 55, 55, 0.95);
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 13px;
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
+            QComboBox:hover {{ border: 1px solid {COLORS['accent_blue']}; }}
         """)
         self.mode_combo.currentIndexChanged.connect(lambda: self.changed.emit())
-        settings_layout.addWidget(self.mode_combo)
+        mode_pattern_row.addWidget(self.mode_combo)
         
-        settings_layout.addSpacing(16)
+        mode_pattern_row.addSpacing(24)
         
-        # Pattern label
+        # Pattern
         pattern_label = QLabel("Pattern:")
-        pattern_label.setStyleSheet("background: transparent;")
-        settings_layout.addWidget(pattern_label)
+        pattern_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        mode_pattern_row.addWidget(pattern_label)
+        mode_pattern_row.addWidget(InfoIcon(
+            "Flash pattern for turn signals and hazards.\n"
+            "Controls the ON/OFF timing of the output."
+        ))
         
-        # Pattern dropdown with card
-        self.pattern_combo = QComboBox()
+        self.pattern_combo = NoScrollComboBox()
         for key, preset in PATTERN_PRESETS.items():
             self.pattern_combo.addItem(preset['name'], key)
-        self.pattern_combo.setMinimumWidth(160)
-        self.pattern_combo.setMinimumHeight(36)
+        self.pattern_combo.setMinimumWidth(140)
+        self.pattern_combo.setMinimumHeight(32)
         self.pattern_combo.setStyleSheet(f"""
             QComboBox {{
-                background-color: rgba(55, 55, 55, 0.95);
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 13px;
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
+            QComboBox:hover {{ border: 1px solid {COLORS['accent_blue']}; }}
         """)
         self.pattern_combo.currentIndexChanged.connect(lambda: self.changed.emit())
-        settings_layout.addWidget(self.pattern_combo)
+        mode_pattern_row.addWidget(self.pattern_combo)
         
-        settings_layout.addStretch()
-        content_layout.addLayout(settings_layout)
+        mode_pattern_row.addStretch()
+        behavior_layout.addLayout(mode_pattern_row)
+        content_layout.addWidget(self.behavior_section)
         
-        # Timer/Delay Configuration Section
-        # Each timer byte: Bit 0 = Execution Mode, Bit 1 = Scale, Bits 2-7 = Value (0-63)
-        
-        # Execution mode row (shared between timer and delay)
-        exec_mode_layout = QHBoxLayout()
-        exec_mode_layout.setSpacing(12)
-        
-        exec_label = QLabel("Timer Behavior:")
-        exec_label.setStyleSheet("background: transparent;")
-        exec_label.setToolTip("How timers respond if input changes before completion")
-        exec_mode_layout.addWidget(exec_label)
-        
-        self.timer_exec_mode_combo = QComboBox()
-        self.timer_exec_mode_combo.addItem("Fire-and-Forget", "fire_and_forget")
-        self.timer_exec_mode_combo.addItem("Track Input", "track_input")
-        self.timer_exec_mode_combo.setMinimumWidth(160)
-        self.timer_exec_mode_combo.setMinimumHeight(36)
-        self.timer_exec_mode_combo.setToolTip(
-            "Fire-and-Forget: Timer runs to completion regardless of input state\n"
-            "Track Input: Timer cancels if input turns OFF"
-        )
-        self.timer_exec_mode_combo.setStyleSheet(f"""
-            QComboBox {{
-                background-color: rgba(55, 55, 55, 0.95);
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 13px;
+        # =====================================================================
+        # SECTION 2: TIMER CONFIGURATION
+        # =====================================================================
+        self.timer_section = QFrame()
+        self.timer_section.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(45, 50, 45, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                padding: 8px;
+                margin-top: 4px;
             }}
         """)
+        timer_layout = QVBoxLayout(self.timer_section)
+        timer_layout.setSpacing(8)
+        timer_layout.setContentsMargins(12, 8, 12, 12)
+        
+        # Section header
+        timer_header = QLabel("TIMER CONFIGURATION")
+        timer_header.setStyleSheet(f"""
+            color: {COLORS['accent_green']};
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            background: transparent;
+        """)
+        timer_layout.addWidget(timer_header)
+        
+        # Timer behavior row
+        exec_row = QHBoxLayout()
+        exec_row.setSpacing(12)
+        
+        exec_label = QLabel("Behavior:")
+        exec_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        exec_row.addWidget(exec_label)
+        exec_row.addWidget(InfoIcon(
+            "Fire-and-Forget: Timer runs to completion even if input turns OFF\n"
+            "Track Input: Timer cancels immediately if input turns OFF"
+        ))
+        
+        self.timer_exec_mode_combo = NoScrollComboBox()
+        self.timer_exec_mode_combo.addItem("Fire-and-Forget", "fire_and_forget")
+        self.timer_exec_mode_combo.addItem("Track Input", "track_input")
+        self.timer_exec_mode_combo.setMinimumWidth(140)
+        self.timer_exec_mode_combo.setMinimumHeight(32)
+        self.timer_exec_mode_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }}
+            QComboBox:hover {{ border: 1px solid {COLORS['accent_green']}; }}
+        """)
         self.timer_exec_mode_combo.currentIndexChanged.connect(lambda: self.changed.emit())
-        exec_mode_layout.addWidget(self.timer_exec_mode_combo)
+        exec_row.addWidget(self.timer_exec_mode_combo)
+        exec_row.addStretch()
+        timer_layout.addLayout(exec_row)
         
-        exec_mode_layout.addStretch()
-        content_layout.addLayout(exec_mode_layout)
+        # Delay and Duration row
+        delay_duration_row = QHBoxLayout()
+        delay_duration_row.setSpacing(12)
         
-        # Timers row
-        timers_layout = QHBoxLayout()
-        timers_layout.setSpacing(12)
-        
-        # Timer Delay (delay before sending ON message)
+        # Delay
         delay_label = QLabel("Delay:")
-        delay_label.setStyleSheet("background: transparent;")
-        delay_label.setToolTip("Delay before sending ON message")
-        timers_layout.addWidget(delay_label)
+        delay_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        delay_duration_row.addWidget(delay_label)
+        delay_duration_row.addWidget(InfoIcon(
+            "Delay before sending the ON message.\n"
+            "Example: 3 second delay before starter engages."
+        ))
         
         self.timer_delay_spin = QSpinBox()
         self.timer_delay_spin.setRange(0, 63)
         self.timer_delay_spin.setValue(0)
-        self.timer_delay_spin.setMinimumWidth(70)
-        self.timer_delay_spin.setMinimumHeight(36)
+        self.timer_delay_spin.setMinimumWidth(60)
+        self.timer_delay_spin.setMinimumHeight(32)
         self.timer_delay_spin.setStyleSheet(f"""
             QSpinBox {{
-                background-color: rgba(55, 55, 55, 0.95);
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 13px;
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
         """)
         self.timer_delay_spin.valueChanged.connect(self._update_timer_display)
-        timers_layout.addWidget(self.timer_delay_spin)
+        delay_duration_row.addWidget(self.timer_delay_spin)
         
-        self.timer_delay_scale_combo = QComboBox()
-        self.timer_delay_scale_combo.addItem("× 0.25s", False)  # False = 0.25s scale
-        self.timer_delay_scale_combo.addItem("× 10s", True)     # True = 10s scale
-        self.timer_delay_scale_combo.setMinimumWidth(90)
-        self.timer_delay_scale_combo.setMinimumHeight(36)
+        self.timer_delay_scale_combo = NoScrollComboBox()
+        self.timer_delay_scale_combo.addItem("× 0.25s", False)
+        self.timer_delay_scale_combo.addItem("× 10s", True)
+        self.timer_delay_scale_combo.setMinimumWidth(80)
+        self.timer_delay_scale_combo.setMinimumHeight(32)
         self.timer_delay_scale_combo.setStyleSheet(f"""
             QComboBox {{
-                background-color: rgba(55, 55, 55, 0.95);
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 13px;
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
         """)
         self.timer_delay_scale_combo.currentIndexChanged.connect(self._update_timer_display)
-        timers_layout.addWidget(self.timer_delay_scale_combo)
+        delay_duration_row.addWidget(self.timer_delay_scale_combo)
         
         self.timer_delay_result = QLabel("= 0s")
-        self.timer_delay_result.setStyleSheet(f"color: {COLORS['text_muted']}; background: transparent;")
-        self.timer_delay_result.setMinimumWidth(80)
-        timers_layout.addWidget(self.timer_delay_result)
+        self.timer_delay_result.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; background: transparent;")
+        self.timer_delay_result.setMinimumWidth(60)
+        delay_duration_row.addWidget(self.timer_delay_result)
         
-        timers_layout.addSpacing(24)
+        delay_duration_row.addSpacing(20)
         
-        # Timer On (how long ON state lasts)
-        timer_on_label = QLabel("Duration:")
-        timer_on_label.setStyleSheet("background: transparent;")
-        timer_on_label.setToolTip("How long to stay ON before auto-OFF (0=indefinite)")
-        timers_layout.addWidget(timer_on_label)
+        # Duration
+        duration_label = QLabel("Duration:")
+        duration_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        delay_duration_row.addWidget(duration_label)
+        delay_duration_row.addWidget(InfoIcon(
+            "How long output stays ON before auto-OFF.\n"
+            "Set to 0 for indefinite (stays ON while input is ON)."
+        ))
         
         self.timer_on_spin = QSpinBox()
         self.timer_on_spin.setRange(0, 63)
         self.timer_on_spin.setValue(0)
-        self.timer_on_spin.setMinimumWidth(70)
-        self.timer_on_spin.setMinimumHeight(36)
+        self.timer_on_spin.setMinimumWidth(60)
+        self.timer_on_spin.setMinimumHeight(32)
         self.timer_on_spin.setStyleSheet(f"""
             QSpinBox {{
-                background-color: rgba(55, 55, 55, 0.95);
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 13px;
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
         """)
         self.timer_on_spin.valueChanged.connect(self._update_timer_display)
-        timers_layout.addWidget(self.timer_on_spin)
+        delay_duration_row.addWidget(self.timer_on_spin)
         
-        self.timer_on_scale_combo = QComboBox()
-        self.timer_on_scale_combo.addItem("× 0.25s", False)  # False = 0.25s scale
-        self.timer_on_scale_combo.addItem("× 10s", True)     # True = 10s scale
-        self.timer_on_scale_combo.setMinimumWidth(90)
-        self.timer_on_scale_combo.setMinimumHeight(36)
+        self.timer_on_scale_combo = NoScrollComboBox()
+        self.timer_on_scale_combo.addItem("× 0.25s", False)
+        self.timer_on_scale_combo.addItem("× 10s", True)
+        self.timer_on_scale_combo.setMinimumWidth(80)
+        self.timer_on_scale_combo.setMinimumHeight(32)
         self.timer_on_scale_combo.setStyleSheet(f"""
             QComboBox {{
-                background-color: rgba(55, 55, 55, 0.95);
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 13px;
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
         """)
         self.timer_on_scale_combo.currentIndexChanged.connect(self._update_timer_display)
-        timers_layout.addWidget(self.timer_on_scale_combo)
+        delay_duration_row.addWidget(self.timer_on_scale_combo)
         
-        self.timer_on_result = QLabel("= 0s")
-        self.timer_on_result.setStyleSheet(f"color: {COLORS['text_muted']}; background: transparent;")
-        self.timer_on_result.setMinimumWidth(80)
-        timers_layout.addWidget(self.timer_on_result)
+        self.timer_on_result = QLabel("= 0s (∞)")
+        self.timer_on_result.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; background: transparent;")
+        self.timer_on_result.setMinimumWidth(70)
+        delay_duration_row.addWidget(self.timer_on_result)
         
-        timers_layout.addStretch()
-        content_layout.addLayout(timers_layout)
+        delay_duration_row.addStretch()
+        timer_layout.addLayout(delay_duration_row)
+        content_layout.addWidget(self.timer_section)
         
-        # Options row (dropdowns and checkboxes for special flags)
-        options_layout = QHBoxLayout()
-        options_layout.setSpacing(20)
-        
-        # Ignition Mode dropdown
-        ignition_mode_label = QLabel("Ignition Mode:")
-        ignition_mode_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px;")
-        options_layout.addWidget(ignition_mode_label)
-        
-        self.ignition_mode_combo = QComboBox()
-        self.ignition_mode_combo.setMinimumWidth(140)
-        self.ignition_mode_combo.setStyleSheet(f"""
-            QComboBox {{
-                background: rgba(70, 70, 70, 0.9);
-                color: {COLORS['text_primary']};
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 6px;
-                padding: 4px 8px;
-                font-size: 11px;
-            }}
-            QComboBox:hover {{
-                border: 1px solid {COLORS['accent_blue']};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                width: 20px;
-            }}
-            QComboBox QAbstractItemView {{
-                background: rgba(50, 50, 50, 0.95);
-                color: {COLORS['text_primary']};
-                selection-background-color: {COLORS['accent_blue']};
+        # =====================================================================
+        # SECTION 3: CONDITIONS
+        # =====================================================================
+        self.conditions_section = QFrame()
+        self.conditions_section.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(50, 45, 50, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                padding: 8px;
+                margin-top: 4px;
             }}
         """)
-        self.ignition_mode_combo.addItem("Normal", "normal")
-        self.ignition_mode_combo.addItem("Sets Ignition", "set_ignition")
-        self.ignition_mode_combo.addItem("Tracks Ignition", "track_ignition")
-        self.ignition_mode_combo.setToolTip(
+        conditions_main_layout = QVBoxLayout(self.conditions_section)
+        conditions_main_layout.setSpacing(10)
+        conditions_main_layout.setContentsMargins(12, 8, 12, 12)
+        
+        # Section header
+        conditions_header = QLabel("CONDITIONS & FLAGS")
+        conditions_header.setStyleSheet(f"""
+            color: {COLORS['accent_orange']};
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            background: transparent;
+        """)
+        conditions_main_layout.addWidget(conditions_header)
+        
+        # Ignition mode and flags row
+        flags_row = QHBoxLayout()
+        flags_row.setSpacing(16)
+        
+        # Ignition Mode
+        ignition_mode_label = QLabel("Ignition Mode:")
+        ignition_mode_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        flags_row.addWidget(ignition_mode_label)
+        flags_row.addWidget(InfoIcon(
             "Normal: No special ignition behavior\n"
             "Sets Ignition: This input IS the ignition source (typically IN01)\n"
             "Tracks Ignition: Case auto-activates when ignition is ON"
-        )
-        self.ignition_mode_combo.currentIndexChanged.connect(lambda: self.changed.emit())
-        options_layout.addWidget(self.ignition_mode_combo)
+        ))
         
+        self.ignition_mode_combo = NoScrollComboBox()
+        self.ignition_mode_combo.addItem("Normal", "normal")
+        self.ignition_mode_combo.addItem("Sets Ignition", "set_ignition")
+        self.ignition_mode_combo.addItem("Tracks Ignition", "track_ignition")
+        self.ignition_mode_combo.setMinimumWidth(130)
+        self.ignition_mode_combo.setMinimumHeight(32)
+        self.ignition_mode_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: rgba(60, 60, 65, 0.95);
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }}
+            QComboBox:hover {{ border: 1px solid {COLORS['accent_orange']}; }}
+        """)
+        self.ignition_mode_combo.currentIndexChanged.connect(lambda: self.changed.emit())
+        flags_row.addWidget(self.ignition_mode_combo)
+        
+        flags_row.addSpacing(16)
+        
+        # Can Be Overridden checkbox
         self.can_override_check = QCheckBox("Can Be Overridden")
-        self.can_override_check.setToolTip("For single-filament brake lights: allows turn signals to override")
         self.can_override_check.setStyleSheet(f"""
             QCheckBox {{
                 color: {COLORS['text_primary']};
                 spacing: 6px;
+                font-size: 12px;
                 background: transparent;
             }}
             QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
+                width: 16px;
+                height: 16px;
                 border-radius: 4px;
                 background: rgba(70, 70, 70, 0.9);
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
             QCheckBox::indicator:checked {{
                 background: {COLORS['accent_orange']};
             }}
         """)
         self.can_override_check.stateChanged.connect(lambda: self.changed.emit())
-        options_layout.addWidget(self.can_override_check)
+        flags_row.addWidget(self.can_override_check)
+        flags_row.addWidget(InfoIcon(
+            "For single-filament brake lights.\n"
+            "Allows turn signals to override brake when both are active."
+        ))
         
+        flags_row.addSpacing(16)
+        
+        # Requires Ignition checkbox
         self.require_ignition_check = QCheckBox("Requires Ignition")
-        self.require_ignition_check.setToolTip("Case only activates when ignition is ON")
         self.require_ignition_check.setStyleSheet(f"""
             QCheckBox {{
                 color: {COLORS['text_primary']};
                 spacing: 6px;
+                font-size: 12px;
                 background: transparent;
             }}
             QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
+                width: 16px;
+                height: 16px;
                 border-radius: 4px;
                 background: rgba(70, 70, 70, 0.9);
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
             QCheckBox::indicator:checked {{
                 background: {COLORS['accent_blue']};
             }}
         """)
         self.require_ignition_check.stateChanged.connect(lambda: self.changed.emit())
-        options_layout.addWidget(self.require_ignition_check)
+        flags_row.addWidget(self.require_ignition_check)
+        flags_row.addWidget(InfoIcon(
+            "Case only activates when the global ignition flag is ON.\n"
+            "This sets bit 5 in the must_be_on bitmask (independent of input selection)."
+        ))
         
-        options_layout.addStretch()
-        content_layout.addLayout(options_layout)
+        flags_row.addStretch()
+        conditions_main_layout.addLayout(flags_row)
         
-        # Conditions section
-        conditions_layout = QHBoxLayout()
-        conditions_layout.setSpacing(24)
+        # Must be ON/OFF row
+        must_row = QHBoxLayout()
+        must_row.setSpacing(24)
         
-        # Must be ON dropdown
+        # Must be ON
         must_on_layout = QVBoxLayout()
+        must_on_label_row = QHBoxLayout()
         must_on_label = QLabel("Must be ON:")
-        must_on_label.setToolTip("This case only activates if ALL selected inputs are currently ON")
-        must_on_layout.addWidget(must_on_label)
+        must_on_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        must_on_label_row.addWidget(must_on_label)
+        must_on_label_row.addWidget(InfoIcon(
+            "This case only activates if ALL selected inputs are ON.\n"
+            "Example: Starter requires Neutral Safety (IN16) to be ON."
+        ))
+        must_on_label_row.addStretch()
+        must_on_layout.addLayout(must_on_label_row)
         
         self.must_on_dropdown = MultiSelectDropdown("None selected")
         self.must_on_dropdown.selection_changed.connect(self.changed)
         must_on_layout.addWidget(self.must_on_dropdown)
-        must_on_layout.addStretch()
-        conditions_layout.addLayout(must_on_layout)
+        must_row.addLayout(must_on_layout)
         
-        # Must be OFF dropdown
+        # Must be OFF
         must_off_layout = QVBoxLayout()
+        must_off_label_row = QHBoxLayout()
         must_off_label = QLabel("Must be OFF:")
-        must_off_label.setToolTip("This case only activates if ALL selected inputs are currently OFF")
-        must_off_layout.addWidget(must_off_label)
+        must_off_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        must_off_label_row.addWidget(must_off_label)
+        must_off_label_row.addWidget(InfoIcon(
+            "This case only activates if ALL selected inputs are OFF.\n"
+            "Used for interlocking or mutually exclusive behaviors."
+        ))
+        must_off_label_row.addStretch()
+        must_off_layout.addLayout(must_off_label_row)
         
         self.must_off_dropdown = MultiSelectDropdown("None selected")
         self.must_off_dropdown.selection_changed.connect(self.changed)
         must_off_layout.addWidget(self.must_off_dropdown)
-        must_off_layout.addStretch()
-        conditions_layout.addLayout(must_off_layout)
+        must_row.addLayout(must_off_layout)
         
-        conditions_layout.addStretch()
-        content_layout.addLayout(conditions_layout)
+        must_row.addStretch()
+        conditions_main_layout.addLayout(must_row)
+        content_layout.addWidget(self.conditions_section)
         
         self.content.setVisible(False)
         self.main_layout.addWidget(self.content)
@@ -1399,6 +1605,10 @@ class CaseEditor(QWidget):
             
             self._update_style()
             self._update_clear_button_visibility()
+            
+            # Update basic mode display if in basic mode
+            if hasattr(self, '_current_view_mode') and self._current_view_mode == ViewMode.BASIC:
+                self._update_basic_output_display()
         finally:
             # Always unblock signals
             self.enable_check.blockSignals(False)
@@ -1511,6 +1721,105 @@ class CaseEditor(QWidget):
             self.ignition_mode_combo.blockSignals(False)
             self.can_override_check.blockSignals(False)
             self.require_ignition_check.blockSignals(False)
+    
+    def set_view_mode(self, mode):
+        """
+        Update UI visibility based on view mode.
+        
+        Args:
+            mode: ViewMode enum (BASIC, ADVANCED, ADMIN)
+        """
+        self._current_view_mode = mode
+        
+        if mode == ViewMode.BASIC:
+            # BASIC: Simplified interface
+            # Hide device selection and output checkboxes
+            self.device_row_widget.setVisible(False)
+            self.outputs_container.setVisible(False)
+            # Show read-only output display instead
+            self.basic_output_display.setVisible(True)
+            self._update_basic_output_display()
+            
+            # Hide timer section
+            if hasattr(self, 'timer_section'):
+                self.timer_section.setVisible(False)
+            # Hide conditions section (must_be_on/off)
+            if hasattr(self, 'conditions_section'):
+                self.conditions_section.setVisible(False)
+            # Hide advanced options
+            self.can_override_check.setVisible(False)
+            self.ignition_mode_combo.setVisible(False)
+            
+            # Keep behavior section visible (mode/pattern)
+            if hasattr(self, 'behavior_section'):
+                self.behavior_section.setVisible(True)
+            
+        elif mode == ViewMode.ADVANCED:
+            # ADVANCED: Show most settings
+            self.device_row_widget.setVisible(True)
+            self.outputs_container.setVisible(True)
+            self.basic_output_display.setVisible(False)
+            
+            if hasattr(self, 'timer_section'):
+                self.timer_section.setVisible(True)
+            if hasattr(self, 'conditions_section'):
+                self.conditions_section.setVisible(True)
+            if hasattr(self, 'behavior_section'):
+                self.behavior_section.setVisible(True)
+            self.can_override_check.setVisible(True)
+            self.ignition_mode_combo.setVisible(True)
+            
+        elif mode == ViewMode.ADMIN:
+            # ADMIN: Show everything
+            self.device_row_widget.setVisible(True)
+            self.outputs_container.setVisible(True)
+            self.basic_output_display.setVisible(False)
+            
+            if hasattr(self, 'timer_section'):
+                self.timer_section.setVisible(True)
+            if hasattr(self, 'conditions_section'):
+                self.conditions_section.setVisible(True)
+            if hasattr(self, 'behavior_section'):
+                self.behavior_section.setVisible(True)
+            self.can_override_check.setVisible(True)
+            self.ignition_mode_combo.setVisible(True)
+    
+    def _update_basic_output_display(self):
+        """Update the read-only output display for Basic mode."""
+        # Get current device and outputs
+        device_id = self.device_combo.currentData()
+        if not device_id or device_id not in self.device_widgets:
+            self.basic_output_label.setText("No output configured")
+            return
+        
+        device = DEVICES.get(device_id)
+        if not device:
+            self.basic_output_label.setText("No output configured")
+            return
+        
+        # Get selected outputs from the device widget
+        device_widget = self.device_widgets[device_id]
+        selected_outputs = []
+        
+        # Iterate through output_widgets (list of OutputConfigWidget)
+        for output_widget in device_widget.output_widgets:
+            if output_widget.enable_check.isChecked():
+                # Get the output display name
+                display_name = output_widget.output_name
+                # Check for mode (soft start, PWM, etc.)
+                if hasattr(output_widget, 'mode_combo'):
+                    mode = output_widget.mode_combo.currentData()
+                    if mode and mode != "normal":
+                        display_name += f" ({mode.replace('_', ' ').title()})"
+                selected_outputs.append(display_name)
+        
+        if selected_outputs:
+            # Format as device name + outputs
+            output_text = f"<b>{device.name}</b><br>"
+            output_text += ", ".join(selected_outputs)
+            self.basic_output_label.setText(output_text)
+        else:
+            self.basic_output_label.setText("No outputs selected")
 
 
 class InputConfigPanel(QWidget):
@@ -1672,17 +1981,42 @@ class InputConfigPanel(QWidget):
         
         for i in range(min(off_count, len(self.off_case_editors), len(config.off_cases))):
             self.off_case_editors[i].set_config(config.off_cases[i], is_default=is_default)
+    
+    def set_view_mode(self, mode):
+        """
+        Set view mode on all case editors.
+        
+        Args:
+            mode: ViewMode enum (BASIC, ADVANCED, ADMIN)
+        """
+        # Propagate to all case editors
+        for editor in self.on_case_editors:
+            editor.set_view_mode(mode)
+        for editor in self.off_case_editors:
+            editor.set_view_mode(mode)
 
 
 class InputsPage(QWidget):
-    """Input configuration with master-detail layout"""
+    """
+    Input configuration with master-detail layout.
+    
+    Supports three view modes:
+    - BASIC: Simplified interface with scripted presets
+    - ADVANCED: Full features with some restrictions  
+    - ADMIN: Full unrestricted access
+    """
     
     def __init__(self, config: FullConfiguration, parent=None):
         super().__init__(parent)
         self.config = config
         self.current_input_number = None
         self.is_preset_loaded = False  # Track if config came from preset
+        self._current_view_mode = None  # Will be set when view mode changes
         self._setup_ui()
+        
+        # Connect to view mode manager
+        view_mode_manager.view_mode_changed.connect(self.on_view_mode_changed)
+        self._current_view_mode = view_mode_manager.current_mode
     
     def _setup_ui(self):
         layout = QHBoxLayout(self)
@@ -1711,7 +2045,7 @@ class InputsPage(QWidget):
         filter_label = QLabel("Filter:")
         filter_label.setMinimumWidth(40)
         filter_layout.addWidget(filter_label)
-        self.filter_combo = QComboBox()
+        self.filter_combo = NoScrollComboBox()
         self.filter_combo.addItem("All Inputs", "all")
         self.filter_combo.addItem("Ground Switched", "ground")
         self.filter_combo.addItem("High-Side", "high_side")
@@ -1859,4 +2193,39 @@ class InputsPage(QWidget):
             editor.reset()
         for editor in self.config_panel.off_case_editors:
             editor.reset()
+    
+    # =========================================================================
+    # VIEW MODE HANDLING
+    # =========================================================================
+    
+    def on_view_mode_changed(self, mode):
+        """
+        Handle view mode changes. Updates UI visibility based on mode.
+        
+        BASIC mode:
+        - Hide timer configuration section
+        - Hide must_be_on/must_be_off conditions
+        - Show simplified "scripted" options
+        
+        ADVANCED mode:
+        - Show all configuration options
+        - Some admin-only features may be hidden
+        
+        ADMIN mode:
+        - Full access to all features
+        - No restrictions
+        """
+        self._current_view_mode = mode
+        
+        # Update the config panel's view mode
+        if hasattr(self.config_panel, 'set_view_mode'):
+            self.config_panel.set_view_mode(mode)
+        
+        # Update all case editors
+        for editor in self.config_panel.on_case_editors:
+            if hasattr(editor, 'set_view_mode'):
+                editor.set_view_mode(mode)
+        for editor in self.config_panel.off_case_editors:
+            if hasattr(editor, 'set_view_mode'):
+                editor.set_view_mode(mode)
 

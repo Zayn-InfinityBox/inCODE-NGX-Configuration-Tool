@@ -55,7 +55,7 @@ def create_case(device_id, outputs, mode=OutputMode.TRACK, pattern_on=0, pattern
                 timer_on_value=0, timer_on_scale_10s=False,
                 timer_delay_value=0, timer_delay_scale_10s=False,
                 timer_execution_mode="fire_and_forget",
-                can_be_overridden=False, require_ignition=False):
+                can_be_overridden=False, require_ignition=False, require_security_off=False):
     """Create a CaseConfig with the specified outputs.
     
     Args:
@@ -72,7 +72,8 @@ def create_case(device_id, outputs, mode=OutputMode.TRACK, pattern_on=0, pattern
         timer_delay_scale_10s: True for 10s increments, False for 0.25s increments
         timer_execution_mode: "fire_and_forget" or "track_input"
         can_be_overridden: If True, allows turn signals to override (for brake lights)
-        require_ignition: If True, case only activates when ignition is ON (must_be_on condition)
+        require_ignition: If True, case only activates when ignition is ON
+        require_security_off: If True, case is blocked when security is ON
     """
     case = CaseConfig()
     case.enabled = True
@@ -83,6 +84,7 @@ def create_case(device_id, outputs, mode=OutputMode.TRACK, pattern_on=0, pattern
     case.set_ignition = (ignition_mode == "set_ignition")  # Legacy field
     case.can_be_overridden = can_be_overridden
     case.require_ignition_on = require_ignition
+    case.require_security_off = require_security_off
     # Timer configuration
     case.timer_execution_mode = timer_execution_mode
     case.timer_on_value = timer_on_value
@@ -104,7 +106,7 @@ def create_multi_device_case(device_outputs_list, pattern_on=0, pattern_off=0,
                              timer_on_value=0, timer_on_scale_10s=False,
                              timer_delay_value=0, timer_delay_scale_10s=False,
                              timer_execution_mode="fire_and_forget",
-                             can_be_overridden=False, require_ignition=False):
+                             can_be_overridden=False, require_ignition=False, require_security_off=False):
     """Create a CaseConfig with outputs on multiple devices."""
     case = CaseConfig()
     case.enabled = True
@@ -113,6 +115,7 @@ def create_multi_device_case(device_outputs_list, pattern_on=0, pattern_off=0,
     case.pattern_off_time = pattern_off
     case.ignition_mode = ignition_mode
     case.set_ignition = (ignition_mode == "set_ignition")  # Legacy field
+    case.require_security_off = require_security_off
     # Timer configuration
     case.timer_execution_mode = timer_execution_mode
     case.timer_on_value = timer_on_value
@@ -167,230 +170,212 @@ def generate_front_engine():
     config.system.diagnostic_sa = 0x80
     config.system.serial_number = 0x42
     
+    # =========================================================================
+    # FRONT ENGINE STANDARD SYSTEM ASSIGNMENTS - IPM1 Kit REV1
+    # =========================================================================
     # Pattern timing 0x33 = on_time=3, off_time=3 (turn signal pattern)
     TURN_PATTERN_ON = 3
     TURN_PATTERN_OFF = 3
     
-    # ===== IN01 - Ignition =====
-    # C: data[0] = 0x20 on PGN 0xFF01 -> Output 3 Track
-    # Also sets ignition flag
+    # ===== IN01 - Ignition (* Blocked when security is ON) =====
+    # Front POWERCELL Output 3, Track mode
     inp = config.inputs[0]
     inp.custom_name = "Ignition"
-    inp.on_cases[0] = create_case("powercell_front", [3], ignition_mode="set_ignition")
+    inp.on_cases[0] = create_case("powercell_front", [3], ignition_mode="set_ignition", 
+                                   require_security_off=True)
     
-    # ===== IN02 - Starter (requires IN16 Neutral Safety) =====
-    # C: data[0] = 0x10 on PGN 0xFF01, must_be_on[1] = 0x80 (IN16)
-    # 0x10 = bit 4 = Output 4
+    # ===== IN02 - Starter (* Blocked when security ON, requires Neutral Safety) =====
+    # Front POWERCELL Output 4, Track mode
     inp = config.inputs[1]
     inp.custom_name = "Starter"
-    inp.on_cases[0] = create_case("powercell_front", [4], must_be_on=[16])
+    inp.on_cases[0] = create_case("powercell_front", [4], must_be_on=[16], 
+                                   require_security_off=True)
     
-    # ===== IN03 - Left Turn Signal =====
-    # C: data[0] = 0x80 on PGN 0xFF01 + 0xFF02, pattern 0x33, requires ignition
-    # 0x80 = bit 7 = Output 1
+    # ===== IN03 - Left Turn Signal (** Requires Ignition) =====
+    # Front POWERCELL Output 1 (Turn Signal pattern), Rear POWERCELL Output 1 (Track)
     inp = config.inputs[2]
     inp.custom_name = "Left Turn"
-    inp.on_cases[0] = create_case("powercell_front", [1], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
-    inp.on_cases[1] = create_case("powercell_rear", [1], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[0] = create_case("powercell_front", [1], pattern_on=TURN_PATTERN_ON, 
+                                   pattern_off=TURN_PATTERN_OFF, require_ignition=True)
+    inp.on_cases[1] = create_case("powercell_rear", [1], require_ignition=True)
     
-    # ===== IN04 - Right Turn Signal =====
-    # C: data[0] = 0x40 on PGN 0xFF01 + 0xFF02, pattern 0x33
-    # 0x40 = bit 6 = Output 2
+    # ===== IN04 - Right Turn Signal (** Requires Ignition) =====
+    # Front POWERCELL Output 2 (Turn Signal pattern), Rear POWERCELL Output 2 (Track)
     inp = config.inputs[3]
     inp.custom_name = "Right Turn"
-    inp.on_cases[0] = create_case("powercell_front", [2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
-    inp.on_cases[1] = create_case("powercell_rear", [2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[0] = create_case("powercell_front", [2], pattern_on=TURN_PATTERN_ON, 
+                                   pattern_off=TURN_PATTERN_OFF, require_ignition=True)
+    inp.on_cases[1] = create_case("powercell_rear", [2], require_ignition=True)
     
     # ===== IN05 - Headlights =====
-    # C: data[0] = 0x08 on PGN 0xFF01 -> Output 5
+    # Front POWERCELL Output 5, Track: Soft Start
     inp = config.inputs[4]
-    inp.custom_name = "Head Lights"
-    inp.on_cases[0] = create_case("powercell_front", [5])
+    inp.custom_name = "Headlights"
+    inp.on_cases[0] = create_case("powercell_front", [5], mode=OutputMode.SOFT_START)
     
     # ===== IN06 - Parking Lights =====
-    # C: data[0] = 0x04 on PGN 0xFF01 + 0xFF02 -> Output 6
+    # Front POWERCELL Output 6 (Track), Rear POWERCELL Output 6 (Track)
     inp = config.inputs[5]
     inp.custom_name = "Parking Lights"
     inp.on_cases[0] = create_case("powercell_front", [6])
     inp.on_cases[1] = create_case("powercell_rear", [6])
     
     # ===== IN07 - High Beams =====
-    # C: data[0] = 0x02 on PGN 0xFF01 -> Output 7
+    # Front POWERCELL Output 7, Track: Soft Start
     inp = config.inputs[6]
     inp.custom_name = "High Beams"
-    inp.on_cases[0] = create_case("powercell_front", [7])
+    inp.on_cases[0] = create_case("powercell_front", [7], mode=OutputMode.SOFT_START)
     
-    # ===== IN08 - Hazards/4-Way =====
-    # C: data[0] = 0xC0 on PGN 0xFF01 + 0xFF02, pattern 0x33 -> Outputs 1,2
+    # ===== IN08 - 4-Ways/Hazards =====
+    # Front POWERCELL Outputs 1,2 (4-Ways pattern), Rear POWERCELL Outputs 1,2 (4-Ways pattern)
     inp = config.inputs[7]
     inp.custom_name = "4-Ways"
-    inp.on_cases[0] = create_case("powercell_front", [1, 2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
-    inp.on_cases[1] = create_case("powercell_rear", [1, 2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[0] = create_case("powercell_front", [1, 2], pattern_on=TURN_PATTERN_ON, 
+                                   pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[1] = create_case("powercell_rear", [1, 2], pattern_on=TURN_PATTERN_ON, 
+                                   pattern_off=TURN_PATTERN_OFF)
     
     # ===== IN09 - Horn =====
-    # C: data[1] = 0x80 on PGN 0xFF01 -> Output 9
+    # Front POWERCELL Output 9, Track mode
     inp = config.inputs[8]
     inp.custom_name = "Horn"
     inp.on_cases[0] = create_case("powercell_front", [9])
     
-    # ===== IN10 - Cooling Fan =====
-    # C: data[1] = 0x40 on PGN 0xFF01 -> Output 10
+    # ===== IN10 - Cooling Fan (Ground Input) =====
+    # Front POWERCELL Output 8, Track: Soft Start
     inp = config.inputs[9]
     inp.custom_name = "Cooling Fan"
-    inp.on_cases[0] = create_case("powercell_front", [10])
+    inp.on_cases[0] = create_case("powercell_front", [8], mode=OutputMode.SOFT_START)
     
-    # ===== IN11 - Brake Light (1-Filament, can be overridden by turns) =====
-    # C: data[0] = 0xC0 on PGN 0xFF02, config_byte=0x04 -> Outputs 1,2
-    # can_be_overridden=True allows turn signals to override when both are active
+    # ===== IN11 - Brake Light Single Filament (can be overridden by turns) =====
+    # Rear POWERCELL Outputs 1,2, Track mode
     inp = config.inputs[10]
-    inp.custom_name = "1-Filament Brake"
+    inp.custom_name = "Brake 1-Fil"
     inp.on_cases[0] = create_case("powercell_rear", [1, 2], can_be_overridden=True)
     
-    # ===== IN12 - Brake Light (Multi-Filament) =====
-    # C: data[0] = 0x20 on PGN 0xFF02 -> Output 3
+    # ===== IN12 - Brake Light Multi-Filament =====
+    # Rear POWERCELL Output 3, Track mode
     inp = config.inputs[11]
-    inp.custom_name = "Multi-Filament Brake"
+    inp.custom_name = "Brake Multi"
     inp.on_cases[0] = create_case("powercell_rear", [3])
     
-    # ===== IN13 - Fuel Pump =====
-    # C: data[1] = 0x40 on PGN 0xFF02 -> Output 10
+    # ===== IN13 - Fuel Pump (* Blocked when security ON) =====
+    # Rear POWERCELL Output 10, Track mode
     inp = config.inputs[12]
     inp.custom_name = "Fuel Pump"
-    inp.on_cases[0] = create_case("powercell_rear", [10])
+    inp.on_cases[0] = create_case("powercell_rear", [10], require_security_off=True)
     
-    # ===== IN14 - Alternating Headlight =====
-    # C: INVALID (no cases configured)
+    # ===== IN14 - OPEN =====
     inp = config.inputs[13]
-    inp.custom_name = "Alt Headlight"
+    inp.custom_name = "OPEN"
     
-    # ===== IN15 - One-Button Start (requires IN16 Neutral Safety) =====
-    # C: Complex one-button start with multiple cases
-    # Case 1: data[0]=0x20, data[7]=0x80, config_byte=0x11 (ignition + starter trigger)
-    # Case 2: data[0]=0x02, pattern_timing=0x1E (30x100ms delay for starter)
+    # ===== IN15 - One-Button Start (requires Neutral Safety) =====
+    # Front POWERCELL Outputs 3,4 (Ignition + Starter)
     inp = config.inputs[14]
     inp.custom_name = "One-Button Start"
-    # First case: Enable ignition outputs (Output 3) and trigger flag
-    inp.on_cases[0] = create_case("powercell_front", [3], must_be_on=[16], ignition_mode="set_ignition")
-    # Second case: Starter (Output 7) with delay before starting, limited duration
-    # timer_delay_value=12 @ 0.25s = 3 second delay before engaging starter
-    # timer_on_value=12 @ 0.25s = starter runs for max 3 seconds then auto-disengages
-    # fire_and_forget: once started, runs full cycle regardless of button state
-    inp.on_cases[1] = create_case("powercell_front", [7], must_be_on=[16], 
+    # Case 1: Ignition (Output 3)
+    inp.on_cases[0] = create_case("powercell_front", [3], must_be_on=[16], 
+                                   ignition_mode="set_ignition")
+    # Case 2: Starter (Output 4) with delay and limited duration
+    inp.on_cases[1] = create_case("powercell_front", [4], must_be_on=[16],
                                    timer_delay_value=12, timer_delay_scale_10s=False,
                                    timer_on_value=12, timer_on_scale_10s=False,
                                    timer_execution_mode="fire_and_forget")
     
-    # ===== IN16 - Neutral Safety Input =====
-    # C: INVALID (this is a condition input, not an output trigger)
+    # ===== IN16 - Neutral Safety Input (Cannot Be Changed) =====
     inp = config.inputs[15]
     inp.custom_name = "Neutral Safety"
     
-    # ===== IN17 - Backup Lights =====
-    # C: data[0] = 0x08 on PGN 0xFF02 -> Output 5
+    # ===== IN17 - Backup Lights (** Requires Ignition) =====
+    # Rear POWERCELL Output 5, Track mode
     inp = config.inputs[16]
     inp.custom_name = "Backup Lights"
-    inp.on_cases[0] = create_case("powercell_rear", [5])
+    inp.on_cases[0] = create_case("powercell_rear", [5], require_ignition=True)
     
     # ===== IN18 - Interior Lights =====
-    # C: data[0] = 0x10 on PGN 0xFF02 -> Output 4
+    # Rear POWERCELL Output 4, Track mode
     inp = config.inputs[17]
     inp.custom_name = "Interior Lights"
     inp.on_cases[0] = create_case("powercell_rear", [4])
     
-    # ===== IN19-IN22 - Aux Inputs (configured but open) =====
-    # C: data[0] = 0x01 on PGN 0xFF01 -> Output 8
+    # ===== IN19 - Open =====
+    # Front POWERCELL Output 10, Track mode
     inp = config.inputs[18]
-    inp.custom_name = "AUX 01"
-    inp.on_cases[0] = create_case("powercell_front", [8])
-    
-    # C: data[0] = 0x02 on PGN 0xFF02 -> Output 7
-    inp = config.inputs[19]
-    inp.custom_name = "AUX 02"
-    inp.on_cases[0] = create_case("powercell_rear", [7])
-    
-    # C: data[0] = 0x01 on PGN 0xFF02 -> Output 8
-    inp = config.inputs[20]
-    inp.custom_name = "AUX 03"
-    inp.on_cases[0] = create_case("powercell_rear", [8])
-    
-    # C: data[1] = 0x80 on PGN 0xFF02 -> Output 9
-    inp = config.inputs[21]
-    inp.custom_name = "AUX 04"
-    inp.on_cases[0] = create_case("powercell_rear", [9])
-    
-    # ===== IN23 - HSIN01 Cooling Fan (High Side) =====
-    # C: data[1] = 0x40 on PGN 0xFF01 -> Output 10
-    inp = config.inputs[22]
-    inp.custom_name = "Cooling Fan HS"
+    inp.custom_name = "Open"
     inp.on_cases[0] = create_case("powercell_front", [10])
     
-    # ===== IN24 - HSIN02 Fuel Pump (High Side) =====
-    # C: data[1] = 0x40 on PGN 0xFF02 -> Output 10
+    # ===== IN20 - Open =====
+    # Rear POWERCELL Output 7, Track mode
+    inp = config.inputs[19]
+    inp.custom_name = "Open"
+    inp.on_cases[0] = create_case("powercell_rear", [7])
+    
+    # ===== IN21 - Open =====
+    # Rear POWERCELL Output 8, Track mode
+    inp = config.inputs[20]
+    inp.custom_name = "Open"
+    inp.on_cases[0] = create_case("powercell_rear", [8])
+    
+    # ===== IN22 - Open or Optional inRESERVE =====
+    # Rear POWERCELL Output 9, Track mode
+    inp = config.inputs[21]
+    inp.custom_name = "Open/inRESERVE"
+    inp.on_cases[0] = create_case("powercell_rear", [9])
+    
+    # ===== IN23 - Door Lock =====
+    inp = config.inputs[22]
+    inp.custom_name = "Door Lock"
+    
+    # ===== IN24 - Door Unlock =====
     inp = config.inputs[23]
+    inp.custom_name = "Door Unlock"
+    
+    # ===== IN25-IN32 - Window Controls =====
+    inp = config.inputs[24]
+    inp.custom_name = "Window DF Up"
+    
+    inp = config.inputs[25]
+    inp.custom_name = "Window PF Up"
+    
+    inp = config.inputs[26]
+    inp.custom_name = "Window DR Up"
+    
+    inp = config.inputs[27]
+    inp.custom_name = "Window PR Up"
+    
+    inp = config.inputs[28]
+    inp.custom_name = "Window DF Down"
+    
+    inp = config.inputs[29]
+    inp.custom_name = "Window PF Down"
+    
+    inp = config.inputs[30]
+    inp.custom_name = "Window DR Down"
+    
+    inp = config.inputs[31]
+    inp.custom_name = "Window PR Down"
+    
+    # ===== IN33-IN38 - Aux Inputs =====
+    for i in range(32, 38):
+        config.inputs[i].custom_name = f"AUX {i-31:02d}"
+    
+    # ===== HSIN01 (IN39) - Cooling Fan 12-Volt Input =====
+    # Front POWERCELL Output 8, Track: Soft Start
+    inp = config.inputs[38]
+    inp.custom_name = "Cooling Fan HS"
+    inp.on_cases[0] = create_case("powercell_front", [8], mode=OutputMode.SOFT_START)
+    
+    # ===== HSIN02 (IN40) - Fuel Pump 12-Volt Input =====
+    # Rear POWERCELL Output 10, Track mode
+    inp = config.inputs[39]
     inp.custom_name = "Fuel Pump HS"
     inp.on_cases[0] = create_case("powercell_rear", [10])
     
-    # ===== IN25-IN32 - Window Controls (inMOTION) =====
-    # IN25 - Window Driver Front UP
-    # C: data[0] = 0x90 on PGN 0xFF03 (inmotion_1)
-    # 0x90 = modifier + ON + timer (Relay 1A UP direction)
-    inp = config.inputs[24]
-    inp.custom_name = "Window DF Up"
-    inp.on_cases[0] = create_case("inmotion_1", [1])  # Relay 1A
-    
-    # IN26 - Window Passenger Front UP
-    # C: data[1] = 0x90 on PGN 0xFF03 (inmotion_1)
-    inp = config.inputs[25]
-    inp.custom_name = "Window PF Up"
-    inp.on_cases[0] = create_case("inmotion_1", [2])  # Relay 1B
-    
-    # IN27 - Window Driver Rear UP
-    # C: data[0] = 0x90 on PGN 0xFF04 (inmotion_2)
-    inp = config.inputs[26]
-    inp.custom_name = "Window DR Up"
-    inp.on_cases[0] = create_case("inmotion_2", [1])  # Relay 1A
-    
-    # IN28 - Window Passenger Rear UP
-    # C: data[1] = 0x90 on PGN 0xFF04 (inmotion_2)
-    inp = config.inputs[27]
-    inp.custom_name = "Window PR Up"
-    inp.on_cases[0] = create_case("inmotion_2", [2])  # Relay 1B
-    
-    # IN29 - Window Driver Front DOWN
-    # C: data[0] = 0x90 on PGN 0xFF05 (inmotion_3)
-    inp = config.inputs[28]
-    inp.custom_name = "Window DF Down"
-    inp.on_cases[0] = create_case("inmotion_3", [1])  # Relay 1A
-    
-    # IN30 - Window Passenger Front DOWN
-    # C: data[1] = 0x90 on PGN 0xFF05 (inmotion_3)
-    inp = config.inputs[29]
-    inp.custom_name = "Window PF Down"
-    inp.on_cases[0] = create_case("inmotion_3", [2])  # Relay 1B
-    
-    # IN31 - Window Driver Rear DOWN
-    # C: data[0] = 0x90 on PGN 0xFF06 (inmotion_4)
-    inp = config.inputs[30]
-    inp.custom_name = "Window DR Down"
-    inp.on_cases[0] = create_case("inmotion_4", [1])  # Relay 1A
-    
-    # IN32 - Window Passenger Rear DOWN
-    # C: data[1] = 0x90 on PGN 0xFF06 (inmotion_4)
-    inp = config.inputs[31]
-    inp.custom_name = "Window PR Down"
-    inp.on_cases[0] = create_case("inmotion_4", [2])  # Relay 1B
-    
-    # ===== IN33-IN38 - Aux Inputs (not configured) =====
-    for i in range(32, 38):
-        config.inputs[i].custom_name = f"AUX B{i-31:02d}"
-    
-    # ===== IN39-IN42 - High Side Aux (not configured) =====
-    for i in range(38, 42):
-        config.inputs[i].custom_name = f"AUX HS{i-35:02d}"
-    
-    # ===== IN43-IN44 - Tach/VSS =====
-    config.inputs[42].custom_name = "Tachometer"
-    config.inputs[43].custom_name = "Speed Sensor"
+    # ===== HSIN03-HSIN06 (IN41-IN44) - Aux High Side =====
+    config.inputs[40].custom_name = "AUX HS03"
+    config.inputs[41].custom_name = "AUX HS04"
+    config.inputs[42].custom_name = "AUX HS05"
+    config.inputs[43].custom_name = "AUX HS06"
     
     return config
 
@@ -428,16 +413,17 @@ def save_config(config, filename, name, description):
 
 def generate_rear_engine():
     """
-    Generate Rear Engine configuration based on eeprom_init_rear_engine.c
+    Generate Rear Engine configuration based on IPM1 Kit REV1 assignments.
     
     Key differences from Front Engine:
     - IN01 (Ignition): POWERCELL Rear Output 4 (instead of Front Output 3)
     - IN02 (Starter): POWERCELL Rear Output 5 (instead of Front Output 4)
+    - IN15 (One-Button Start): POWERCELL Rear Outputs 4,5
     - Engine accessories on rear POWERCELL, lighting on front POWERCELL
     """
     config = FullConfiguration()
     
-    # System configuration (same as front engine)
+    # System configuration
     config.system = SystemConfig()
     config.system.bitrate = 1
     config.system.heartbeat_pgn_high = 0xFF
@@ -457,179 +443,211 @@ def generate_rear_engine():
     config.system.diagnostic_sa = 0x80
     config.system.serial_number = 0x42
     
+    # =========================================================================
+    # REAR ENGINE STANDARD SYSTEM ASSIGNMENTS - IPM1 Kit REV1
+    # =========================================================================
     TURN_PATTERN_ON = 3
     TURN_PATTERN_OFF = 3
     
-    # ===== IN01 - Ignition (REAR ENGINE: on POWERCELL Rear) =====
-    # C: data[0] = 0x10 on PGN 0xFF02 -> Output 4 Track
+    # ===== IN01 - Ignition (* Blocked when security is ON) =====
+    # Rear POWERCELL Output 4, Track mode
     inp = config.inputs[0]
     inp.custom_name = "Ignition"
-    inp.on_cases[0] = create_case("powercell_rear", [4], ignition_mode="set_ignition")
+    inp.on_cases[0] = create_case("powercell_rear", [4], ignition_mode="set_ignition",
+                                   require_security_off=True)
     
-    # ===== IN02 - Starter (REAR ENGINE: on POWERCELL Rear, requires IN16) =====
-    # C: data[0] = 0x08 on PGN 0xFF02, must_be_on[1] = 0x80 (IN16)
-    # 0x08 = bit 3 = Output 5
+    # ===== IN02 - Starter (* Blocked when security ON, requires Neutral Safety) =====
+    # Rear POWERCELL Output 5, Track mode
     inp = config.inputs[1]
     inp.custom_name = "Starter"
-    inp.on_cases[0] = create_case("powercell_rear", [5], must_be_on=[16])
+    inp.on_cases[0] = create_case("powercell_rear", [5], must_be_on=[16],
+                                   require_security_off=True)
     
-    # ===== IN03 - Left Turn Signal (same as front) =====
+    # ===== IN03 - Left Turn Signal (** Requires Ignition) =====
+    # Front POWERCELL Output 1 (Turn Signal pattern), Rear POWERCELL Output 1 (Track)
     inp = config.inputs[2]
     inp.custom_name = "Left Turn"
-    inp.on_cases[0] = create_case("powercell_front", [1], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
-    inp.on_cases[1] = create_case("powercell_rear", [1], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[0] = create_case("powercell_front", [1], pattern_on=TURN_PATTERN_ON,
+                                   pattern_off=TURN_PATTERN_OFF, require_ignition=True)
+    inp.on_cases[1] = create_case("powercell_rear", [1], require_ignition=True)
     
-    # ===== IN04 - Right Turn Signal (same as front) =====
+    # ===== IN04 - Right Turn Signal (** Requires Ignition) =====
+    # Front POWERCELL Output 2 (Turn Signal pattern), Rear POWERCELL Output 2 (Track)
     inp = config.inputs[3]
     inp.custom_name = "Right Turn"
-    inp.on_cases[0] = create_case("powercell_front", [2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
-    inp.on_cases[1] = create_case("powercell_rear", [2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[0] = create_case("powercell_front", [2], pattern_on=TURN_PATTERN_ON,
+                                   pattern_off=TURN_PATTERN_OFF, require_ignition=True)
+    inp.on_cases[1] = create_case("powercell_rear", [2], require_ignition=True)
     
-    # ===== IN05 - Headlights (same as front) =====
+    # ===== IN05 - Headlights =====
+    # Front POWERCELL Output 5, Track: Soft Start
     inp = config.inputs[4]
-    inp.custom_name = "Head Lights"
-    inp.on_cases[0] = create_case("powercell_front", [5])
+    inp.custom_name = "Headlights"
+    inp.on_cases[0] = create_case("powercell_front", [5], mode=OutputMode.SOFT_START)
     
-    # ===== IN06 - Parking Lights (same as front) =====
+    # ===== IN06 - Parking Lights =====
+    # Front POWERCELL Output 6 (Track), Rear POWERCELL Output 6 (Track)
     inp = config.inputs[5]
     inp.custom_name = "Parking Lights"
     inp.on_cases[0] = create_case("powercell_front", [6])
     inp.on_cases[1] = create_case("powercell_rear", [6])
     
-    # ===== IN07 - High Beams (same as front) =====
+    # ===== IN07 - High Beams =====
+    # Front POWERCELL Output 7, Track: Soft Start
     inp = config.inputs[6]
     inp.custom_name = "High Beams"
-    inp.on_cases[0] = create_case("powercell_front", [7])
+    inp.on_cases[0] = create_case("powercell_front", [7], mode=OutputMode.SOFT_START)
     
-    # ===== IN08 - Hazards (same as front) =====
+    # ===== IN08 - 4-Ways/Hazards =====
+    # Front POWERCELL Outputs 1,2, Rear POWERCELL Outputs 1,2 (4-Ways pattern)
     inp = config.inputs[7]
     inp.custom_name = "4-Ways"
-    inp.on_cases[0] = create_case("powercell_front", [1, 2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
-    inp.on_cases[1] = create_case("powercell_rear", [1, 2], pattern_on=TURN_PATTERN_ON, pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[0] = create_case("powercell_front", [1, 2], pattern_on=TURN_PATTERN_ON,
+                                   pattern_off=TURN_PATTERN_OFF)
+    inp.on_cases[1] = create_case("powercell_rear", [1, 2], pattern_on=TURN_PATTERN_ON,
+                                   pattern_off=TURN_PATTERN_OFF)
     
-    # ===== IN09 - Horn (same as front) =====
+    # ===== IN09 - Horn =====
+    # Front POWERCELL Output 9, Track mode
     inp = config.inputs[8]
     inp.custom_name = "Horn"
     inp.on_cases[0] = create_case("powercell_front", [9])
     
-    # ===== IN10 - Cooling Fan (same as front - on Front POWERCELL for rad) =====
+    # ===== IN10 - Cooling Fan (Ground Input) =====
+    # Front POWERCELL Output 8, Track: Soft Start
     inp = config.inputs[9]
     inp.custom_name = "Cooling Fan"
-    inp.on_cases[0] = create_case("powercell_front", [10])
+    inp.on_cases[0] = create_case("powercell_front", [8], mode=OutputMode.SOFT_START)
     
-    # ===== IN11 - Brake Light 1-Filament (can be overridden by turns) =====
+    # ===== IN11 - Brake Light Single Filament (can be overridden by turns) =====
+    # Rear POWERCELL Outputs 1,2, Track mode
     inp = config.inputs[10]
-    inp.custom_name = "1-Filament Brake"
+    inp.custom_name = "Brake 1-Fil"
     inp.on_cases[0] = create_case("powercell_rear", [1, 2], can_be_overridden=True)
     
-    # ===== IN12 - Brake Light Multi (same as front) =====
+    # ===== IN12 - Brake Light Multi-Filament =====
+    # Rear POWERCELL Output 3, Track mode
     inp = config.inputs[11]
-    inp.custom_name = "Multi-Filament Brake"
+    inp.custom_name = "Brake Multi"
     inp.on_cases[0] = create_case("powercell_rear", [3])
     
-    # ===== IN13 - Fuel Pump (REAR ENGINE: on POWERCELL Rear) =====
+    # ===== IN13 - Fuel Pump (* Blocked when security ON) =====
+    # Rear POWERCELL Output 10, Track mode
     inp = config.inputs[12]
     inp.custom_name = "Fuel Pump"
-    inp.on_cases[0] = create_case("powercell_rear", [10])
+    inp.on_cases[0] = create_case("powercell_rear", [10], require_security_off=True)
     
-    # ===== IN14 - Alternating Headlight (not configured) =====
+    # ===== IN14 - OPEN =====
     inp = config.inputs[13]
-    inp.custom_name = "Alt Headlight"
+    inp.custom_name = "OPEN"
     
-    # ===== IN15 - One-Button Start (on Front POWERCELL, requires IN16) =====
+    # ===== IN15 - One-Button Start (requires Neutral Safety) =====
+    # Rear POWERCELL Outputs 4,5 (Ignition + Starter)
     inp = config.inputs[14]
     inp.custom_name = "One-Button Start"
-    inp.on_cases[0] = create_case("powercell_front", [3], must_be_on=[16], ignition_mode="set_ignition")
-    # Starter with delay and limited duration (same as front engine)
-    inp.on_cases[1] = create_case("powercell_front", [7], must_be_on=[16], 
+    # Case 1: Ignition (Output 4)
+    inp.on_cases[0] = create_case("powercell_rear", [4], must_be_on=[16],
+                                   ignition_mode="set_ignition")
+    # Case 2: Starter (Output 5) with delay and limited duration
+    inp.on_cases[1] = create_case("powercell_rear", [5], must_be_on=[16],
                                    timer_delay_value=12, timer_delay_scale_10s=False,
                                    timer_on_value=12, timer_on_scale_10s=False,
                                    timer_execution_mode="fire_and_forget")
     
-    # ===== IN16 - Neutral Safety (condition input) =====
+    # ===== IN16 - Neutral Safety Input (Cannot Be Changed) =====
     inp = config.inputs[15]
     inp.custom_name = "Neutral Safety"
     
-    # ===== IN17 - Backup Lights (same as front) =====
+    # ===== IN17 - Backup Lights (** Requires Ignition) =====
+    # Rear POWERCELL Output 7, Track mode
     inp = config.inputs[16]
     inp.custom_name = "Backup Lights"
-    inp.on_cases[0] = create_case("powercell_rear", [5])
+    inp.on_cases[0] = create_case("powercell_rear", [7], require_ignition=True)
     
-    # ===== IN18 - Interior Lights (same as front) =====
+    # ===== IN18 - Interior Lights =====
+    # Front POWERCELL Output 4, Track mode
     inp = config.inputs[17]
     inp.custom_name = "Interior Lights"
-    inp.on_cases[0] = create_case("powercell_rear", [4])
+    inp.on_cases[0] = create_case("powercell_front", [4])
     
-    # ===== IN19-IN22 - Aux Inputs =====
+    # ===== IN19 - Open =====
+    # Front POWERCELL Output 10, Track mode
     inp = config.inputs[18]
-    inp.custom_name = "AUX 01"
-    inp.on_cases[0] = create_case("powercell_front", [8])
-    
-    inp = config.inputs[19]
-    inp.custom_name = "AUX 02"
-    inp.on_cases[0] = create_case("powercell_rear", [7])
-    
-    inp = config.inputs[20]
-    inp.custom_name = "AUX 03"
-    inp.on_cases[0] = create_case("powercell_rear", [8])
-    
-    inp = config.inputs[21]
-    inp.custom_name = "AUX 04"
-    inp.on_cases[0] = create_case("powercell_rear", [9])
-    
-    # ===== IN23-24 - High Side Inputs =====
-    inp = config.inputs[22]
-    inp.custom_name = "Cooling Fan HS"
+    inp.custom_name = "Open"
     inp.on_cases[0] = create_case("powercell_front", [10])
     
-    inp = config.inputs[23]
-    inp.custom_name = "Fuel Pump HS"
-    inp.on_cases[0] = create_case("powercell_rear", [10])
+    # ===== IN20 - Open =====
+    # Front POWERCELL Output 3, Track mode
+    inp = config.inputs[19]
+    inp.custom_name = "Open"
+    inp.on_cases[0] = create_case("powercell_front", [3])
     
-    # ===== IN25-IN32 - Window Controls (same as front) =====
+    # ===== IN21 - Open =====
+    # Rear POWERCELL Output 8, Track mode
+    inp = config.inputs[20]
+    inp.custom_name = "Open"
+    inp.on_cases[0] = create_case("powercell_rear", [8])
+    
+    # ===== IN22 - Open or Optional inRESERVE =====
+    # Rear POWERCELL Output 9, Track mode
+    inp = config.inputs[21]
+    inp.custom_name = "Open/inRESERVE"
+    inp.on_cases[0] = create_case("powercell_rear", [9])
+    
+    # ===== IN23 - Door Lock =====
+    inp = config.inputs[22]
+    inp.custom_name = "Door Lock"
+    
+    # ===== IN24 - Door Unlock =====
+    inp = config.inputs[23]
+    inp.custom_name = "Door Unlock"
+    
+    # ===== IN25-IN32 - Window Controls =====
     inp = config.inputs[24]
     inp.custom_name = "Window DF Up"
-    inp.on_cases[0] = create_case("inmotion_1", [1])
     
     inp = config.inputs[25]
     inp.custom_name = "Window PF Up"
-    inp.on_cases[0] = create_case("inmotion_1", [2])
     
     inp = config.inputs[26]
     inp.custom_name = "Window DR Up"
-    inp.on_cases[0] = create_case("inmotion_2", [1])
     
     inp = config.inputs[27]
     inp.custom_name = "Window PR Up"
-    inp.on_cases[0] = create_case("inmotion_2", [2])
     
     inp = config.inputs[28]
     inp.custom_name = "Window DF Down"
-    inp.on_cases[0] = create_case("inmotion_3", [1])
     
     inp = config.inputs[29]
     inp.custom_name = "Window PF Down"
-    inp.on_cases[0] = create_case("inmotion_3", [2])
     
     inp = config.inputs[30]
     inp.custom_name = "Window DR Down"
-    inp.on_cases[0] = create_case("inmotion_4", [1])
     
     inp = config.inputs[31]
     inp.custom_name = "Window PR Down"
-    inp.on_cases[0] = create_case("inmotion_4", [2])
     
-    # ===== IN33-IN38 - Aux Inputs B =====
+    # ===== IN33-IN38 - Aux Inputs =====
     for i in range(32, 38):
-        config.inputs[i].custom_name = f"AUX B{i-31:02d}"
+        config.inputs[i].custom_name = f"AUX {i-31:02d}"
     
-    # ===== IN39-IN42 - High Side Aux =====
-    for i in range(38, 42):
-        config.inputs[i].custom_name = f"AUX HS{i-35:02d}"
+    # ===== HSIN01 (IN39) - Cooling Fan 12-Volt Input =====
+    # Front POWERCELL Output 8, Track: Soft Start
+    inp = config.inputs[38]
+    inp.custom_name = "Cooling Fan HS"
+    inp.on_cases[0] = create_case("powercell_front", [8], mode=OutputMode.SOFT_START)
     
-    # ===== IN43-IN44 - Tach/VSS =====
-    config.inputs[42].custom_name = "Tachometer"
-    config.inputs[43].custom_name = "Speed Sensor"
+    # ===== HSIN02 (IN40) - Fuel Pump 12-Volt Input =====
+    # Rear POWERCELL Output 10, Track mode
+    inp = config.inputs[39]
+    inp.custom_name = "Fuel Pump HS"
+    inp.on_cases[0] = create_case("powercell_rear", [10])
+    
+    # ===== HSIN03-HSIN06 (IN41-IN44) - Aux High Side =====
+    config.inputs[40].custom_name = "AUX HS03"
+    config.inputs[41].custom_name = "AUX HS04"
+    config.inputs[42].custom_name = "AUX HS05"
+    config.inputs[43].custom_name = "AUX HS06"
     
     return config
 
