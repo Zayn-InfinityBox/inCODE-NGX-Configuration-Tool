@@ -27,6 +27,9 @@ jobs:
       - name: Build macOS app
         run: python build.py
 
+      - name: List build output
+        run: ls -la dist/
+
       - name: Create ZIP archive
         run: |
           cd dist
@@ -58,9 +61,13 @@ jobs:
       - name: Build Windows exe
         run: python build.py
 
+      - name: List build output
+        run: Get-ChildItem -Path dist -Recurse
+        if: always()
+
       - name: Create ZIP archive
         run: |
-          Compress-Archive -Path "dist\inCode NGX Config.exe" -DestinationPath "inCode-NGX-Config-Windows.zip"
+          Compress-Archive -Path "dist/inCode NGX Config.exe" -DestinationPath "inCode-NGX-Config-Windows.zip"
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
