@@ -1,15 +1,20 @@
 # inCode NGX Configuration Tool
 
-A Python-based desktop application for configuring MasterCell devices via CAN bus using the GridConnect CANUSB COM FD (USB to CAN FD converter).
+<p align="center">
+  <img src="resources/icon.png" alt="Infinity Box Logo" width="120"/>
+</p>
+
+A professional desktop application for configuring **inCode NGX MasterCell** devices via CAN bus. Built with Python and PyQt6, designed for the GridConnect CANUSB COM FD adapter.
 
 ## Features
 
-- **Cross-Platform**: Works on Windows and macOS
-- **Easy Connection**: Auto-detects available COM ports
-- **CAN Configuration**: Set bitrate (default 250 kbps for Classic CAN)
-- **Message Sending**: Send standard (11-bit) and extended (29-bit) CAN frames
-- **Raw Commands**: Send raw ASCII commands directly to the adapter
-- **Real-time Logging**: View all TX/RX communication with timestamps
+- **🔧 Complete Configuration** - Configure all 32 inputs with up to 5 ON cases and 5 OFF cases each
+- **💡 Multi-Device Support** - Control outputs on Front PowerCell and Rear PowerCell simultaneously
+- **📁 Template Presets** - Quick setup with Front Engine and Rear Engine configurations
+- **🔒 View Modes** - Basic, Advanced, and Admin modes for different user skill levels
+- **📤 Import/Export** - Save and load configurations as JSON files
+- **⚡ Real-time Communication** - Read from and write to device EEPROM over CAN bus
+- **🖥️ Cross-Platform** - Works on Windows and macOS
 
 ## Requirements
 
@@ -31,12 +36,16 @@ pip install -r requirements.txt
 
 3. Run the application:
 ```bash
-python incode_ngx_config.py
+python main.py
 ```
 
-### Building Executables
+### Pre-built Application (macOS)
 
-To create a standalone executable:
+1. Navigate to the `dist/` folder
+2. Double-click `inCode NGX Config.app`
+3. If macOS blocks the app, right-click and select "Open"
+
+### Building from Source
 
 ```bash
 # Install PyInstaller if not already installed
@@ -48,56 +57,56 @@ python build.py
 
 The executable will be created in the `dist/` folder.
 
+## Project Structure
+
+```
+inCode NGX Configuration Tool/
+├── main.py                 # Application entry point
+├── config_data.py          # Data models and configuration structures
+├── can_interface.py        # CAN bus communication layer
+├── eeprom_protocol.py      # EEPROM read/write protocol
+├── styles.py               # UI styling and themes
+├── view_mode.py            # View mode management
+├── pages/                  # Wizard page components
+│   ├── welcome_page.py
+│   ├── connection_page.py
+│   ├── inputs_page.py
+│   ├── confirmation_page.py
+│   └── write_page.py
+├── widgets/                # Reusable UI widgets
+├── resources/              # Application resources
+│   ├── icon.png
+│   ├── icon.icns
+│   └── presets/            # Default configuration templates
+├── build.py                # Build script for executables
+└── requirements.txt        # Python dependencies
+```
+
 ## Usage
 
-### Connecting to the Device
+### Quick Start
 
-1. Connect your GridConnect CANUSB COM FD to your computer via USB
+1. Connect your GridConnect CANUSB COM FD to your computer
 2. Launch the application
-3. Click **Refresh** to scan for available COM ports
-4. Select the correct COM port from the dropdown
-5. Click **Connect**
+3. Select a configuration template (Front Engine or Rear Engine) or load a saved file
+4. Navigate through the wizard to configure inputs
+5. Review your changes and write to the device
 
-### Configuring CAN
+### View Modes
 
-1. Select the desired CAN bitrate (default: 250 kbps)
-2. Click **Configure CAN** to set the bitrate
-3. Click **Open CAN Channel** to start CAN communication
+- **Basic Mode** - Simplified interface for common operations
+- **Advanced Mode** - Full access to input/output configuration
+- **Admin Mode** - Complete access including locked system inputs (password protected)
 
-### Sending CAN Messages
+### Input Configuration
 
-1. Enter the CAN ID in hexadecimal (e.g., `123` for standard, `1ABCDEF0` for extended)
-2. Toggle between Standard (11-bit) and Extended (29-bit) ID types
-3. Set the data length (0-8 bytes)
-4. Enter the data bytes in hexadecimal, separated by spaces (e.g., `01 02 03 04`)
-5. Click **Send CAN Message**
-
-### Raw Commands
-
-You can send raw ASCII commands directly using the "Raw ASCII Command" field. Some common commands:
-
-| Command | Description |
-|---------|-------------|
-| `V` | Get firmware version |
-| `N` | Get serial number |
-| `S5` | Set bitrate to 250 kbps |
-| `O` | Open CAN channel |
-| `C` | Close CAN channel |
-| `t1230801020304050607` | Send standard frame (ID=123, 8 bytes) |
-
-## CAN Bitrate Settings
-
-| Setting | Speed |
-|---------|-------|
-| S0 | 10 kbps |
-| S1 | 20 kbps |
-| S2 | 50 kbps |
-| S3 | 100 kbps |
-| S4 | 125 kbps |
-| S5 | 250 kbps |
-| S6 | 500 kbps |
-| S7 | 800 kbps |
-| S8 | 1 Mbps |
+Each input supports:
+- Up to 5 ON cases (triggered when input turns ON)
+- Up to 5 OFF cases (triggered when input turns OFF)
+- Multiple output assignments per case
+- Output modes: Track, Soft Start, PWM
+- Timer configurations (delay, fire-and-forget, one-shot)
+- Ignition tracking and conditions
 
 ## Hardware Setup
 
@@ -111,34 +120,37 @@ You can send raw ASCII commands directly using the "Raw ASCII Command" field. So
 
 ### Connection Notes
 
-- Ensure proper CAN bus termination (120Ω resistors at each end of the bus)
-- The device provides 3750 Vrms / 1500 VDC isolation
-- Power is supplied via USB (no external power needed)
+- Ensure proper CAN bus termination (120Ω resistors at each end)
+- CAN bitrate: 250 kbps (Classic CAN)
+- Power supplied via USB (no external power needed)
 
 ## Troubleshooting
 
 ### No COM ports detected
-- Make sure the CANUSB COM FD is connected
-- On Windows, you may need to install the drivers (available from GridConnect website)
-- On macOS/Linux, the device should be detected automatically as a virtual COM port
+- Ensure the CANUSB COM FD is connected
+- On Windows, install drivers from GridConnect website
+- On macOS/Linux, detected automatically as virtual COM port
 
 ### Connection errors
 - Try a different USB port
 - Check if another application is using the COM port
 - Restart the application
 
-### No CAN messages received
-- Ensure the CAN channel is opened (`O` command)
-- Verify the correct bitrate is set
-- Check CAN bus wiring and termination
+### Write failures
+- Verify CAN bus wiring and termination
+- Check that the device is powered and responding
+- Try reading configuration first to verify communication
+
+## Version
+
+**v0.1.1-alpha.3**
 
 ## License
 
-This software is provided as-is for use with inCode MasterCell configuration.
+Copyright © 2026 Infinity Box. All rights reserved.
+
+This software is provided for use with inCode NGX MasterCell devices.
 
 ## Support
 
-For hardware support, contact GridConnect:
-- Phone: +1 (800) 975-4743 (USA Toll Free)
-- Website: https://www.gridconnect.com
-
+For product support, contact Infinity Box.
