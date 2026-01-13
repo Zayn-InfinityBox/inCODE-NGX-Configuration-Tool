@@ -790,6 +790,8 @@ class MainWindow(QMainWindow):
             if config:
                 self.configuration = config
                 self.inputs_page.set_configuration(config, is_preset=is_preset)
+                # Store original config for change comparison BEFORE setting current config
+                self.confirmation_page.set_original_configuration(config)
                 self.confirmation_page.set_configuration(config)
                 self.write_page.set_configuration(config)
             self.pages.setCurrentIndex(1)
@@ -843,7 +845,11 @@ class MainWindow(QMainWindow):
         """Handle configuration loaded from file or preset"""
         self.configuration = config
         self.inputs_page.set_configuration(config, is_preset=is_preset)
+        
+        # Store original config for change comparison in confirmation page
+        self.confirmation_page.set_original_configuration(config)
         self.confirmation_page.set_configuration(config)
+        
         self.write_page.set_configuration(config)  # Update write page too!
     
     def _on_connection_changed(self, connected: bool):

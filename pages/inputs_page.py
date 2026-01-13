@@ -28,6 +28,23 @@ from config_data import (
 # Import view mode system
 from view_mode import ViewMode, view_mode_manager
 
+# Inputs that are fully locked in Basic mode (all cases locked)
+# In Advanced mode, only specific cases are locked (see LOCKED_CASES_BY_INPUT)
+LOCKED_INPUTS_BASIC = {"IN01", "IN02", "IN03", "IN04", "IN08", "IN15"}
+
+# Number of locked cases per input in Advanced mode
+# IN01, IN02: Only case 1 (index 0) is locked
+# IN03, IN04, IN08: Cases 1-2 (indices 0-1) are locked
+# IN15: Only case 1 (index 0) is locked
+LOCKED_CASES_BY_INPUT = {
+    "IN01": 1,  # First 1 case locked (case 1)
+    "IN02": 1,  # First 1 case locked (case 1)
+    "IN03": 2,  # First 2 cases locked (cases 1-2)
+    "IN04": 2,  # First 2 cases locked (cases 1-2)
+    "IN08": 2,  # First 2 cases locked (cases 1-2)
+    "IN15": 1,  # First 1 case locked (case 1)
+}
+
 
 class NoScrollComboBox(QComboBox):
     """
@@ -487,6 +504,32 @@ class OutputConfigWidget(QWidget):
             self.mode_combo.setEnabled(self.enable_check.isChecked())
             self.pwm_slider.setEnabled(self.enable_check.isChecked())
     
+    def set_locked_mode(self, locked: bool):
+        """
+        Set locked mode - shows output info but nothing is editable.
+        Used for locked cases where we want to show config but not allow changes.
+        
+        Args:
+            locked: If True, disable ALL controls. If False, restore normal state.
+        """
+        if locked:
+            # Only show if output is enabled
+            if not self.enable_check.isChecked():
+                self.setVisible(False)
+                return
+            
+            self.setVisible(True)
+            # Disable ALL controls
+            self.enable_check.setEnabled(False)
+            self.mode_combo.setEnabled(False)
+            self.pwm_slider.setEnabled(False)
+        else:
+            # Restore normal state
+            self.setVisible(True)
+            self.enable_check.setEnabled(True)
+            self.mode_combo.setEnabled(self.enable_check.isChecked())
+            self.pwm_slider.setEnabled(self.enable_check.isChecked())
+    
     def reset(self):
         """Reset to default state. Blocks signals to prevent change cascade."""
         self.enable_check.blockSignals(True)
@@ -550,6 +593,18 @@ class DeviceOutputsWidget(QWidget):
             self.device_check = QCheckBox()
             self.header_widget.setVisible(False)
             self.pgn_label = None
+        
+        # Basic mode device label (shown only in basic mode)
+        self.basic_device_label = QLabel(f"{self.device.name}")
+        self.basic_device_label.setStyleSheet(f"""
+            color: {COLORS['accent_blue']};
+            font-size: 12px;
+            font-weight: bold;
+            background: transparent;
+            padding: 4px 0;
+        """)
+        self.basic_device_label.setVisible(False)  # Hidden by default
+        layout.addWidget(self.basic_device_label)
         
         # Outputs container
         self.outputs_container = QWidget()
@@ -655,19 +710,59 @@ class DeviceOutputsWidget(QWidget):
             has_configured = any(w.enable_check.isChecked() for w in self.output_widgets)
             if not has_configured:
                 self.setVisible(False)
+                self.basic_device_label.setVisible(False)
                 return
             
             self.setVisible(True)
+            # Show simplified device name label in basic mode
+            self.basic_device_label.setVisible(True)
         else:
             # Normal mode: show everything
             if self.show_header:
                 self.header_widget.setVisible(True)
             self.outputs_label.setVisible(True)
+            self.basic_device_label.setVisible(False)  # Hide basic mode label
             self.setVisible(True)
         
         # Propagate to all output widgets
         for widget in self.output_widgets:
             widget.set_basic_mode(basic_mode)
+    
+    def set_locked_mode(self, locked: bool):
+        """
+        Set locked mode - shows device/output info but nothing is editable.
+        Uses same styling as basic mode but with all controls disabled.
+        
+        Args:
+            locked: If True, disable ALL controls. If False, restore normal state.
+        """
+        if locked:
+            # Hide header (device checkbox and PGN label)
+            self.header_widget.setVisible(False)
+            # Hide instructional label
+            self.outputs_label.setVisible(False)
+            
+            # Check if ANY output is configured - if not, hide entire widget
+            has_configured = any(w.enable_check.isChecked() for w in self.output_widgets)
+            if not has_configured:
+                self.setVisible(False)
+                self.basic_device_label.setVisible(False)
+                return
+            
+            self.setVisible(True)
+            # Show simplified device name label (same as basic mode)
+            self.basic_device_label.setVisible(True)
+        else:
+            # Restore normal mode visibility
+            if self.show_header:
+                self.header_widget.setVisible(True)
+            self.outputs_label.setVisible(True)
+            self.basic_device_label.setVisible(False)
+            self.setVisible(True)
+        
+        # Propagate locked mode to all output widgets
+        for widget in self.output_widgets:
+            widget.set_locked_mode(locked)
 
 
 class CaseEditor(QWidget):
@@ -732,6 +827,7 @@ class CaseEditor(QWidget):
         self._stored_config = None  # Store config when enabled
         self._cached_style_state = None  # Track current style state
         self._current_view_mode = None  # Current view mode (BASIC/ADVANCED/ADMIN)
+        self._is_locked = False  # Track if case is locked (non-editable)
         
         # Initialize class-level styles once
         CaseEditor._init_master_styles()
@@ -1333,14 +1429,15 @@ class CaseEditor(QWidget):
         flags_row.setSpacing(16)
         
         # Ignition Mode
-        ignition_mode_label = QLabel("Ignition Mode:")
-        ignition_mode_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
-        flags_row.addWidget(ignition_mode_label)
-        flags_row.addWidget(InfoIcon(
+        self.ignition_mode_label = QLabel("Ignition Mode:")
+        self.ignition_mode_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px; background: transparent;")
+        flags_row.addWidget(self.ignition_mode_label)
+        self.ignition_mode_info = InfoIcon(
             "Normal: No special ignition behavior\n"
             "Sets Ignition: This input IS the ignition source (typically IN01)\n"
             "Tracks Ignition: Case auto-activates when ignition is ON"
-        ))
+        )
+        flags_row.addWidget(self.ignition_mode_info)
         
         self.ignition_mode_combo = NoScrollComboBox()
         self.ignition_mode_combo.addItem("Normal", "normal")
@@ -1414,10 +1511,11 @@ class CaseEditor(QWidget):
         """)
         self.require_ignition_check.stateChanged.connect(lambda: self.changed.emit())
         flags_row.addWidget(self.require_ignition_check)
-        flags_row.addWidget(InfoIcon(
+        self.require_ignition_info = InfoIcon(
             "Case only activates when the global ignition flag is ON.\n"
             "This sets bit 5 in the must_be_on bitmask (independent of input selection)."
-        ))
+        )
+        flags_row.addWidget(self.require_ignition_info)
         
         flags_row.addStretch()
         conditions_main_layout.addLayout(flags_row)
@@ -1468,6 +1566,44 @@ class CaseEditor(QWidget):
         
         self.content.setVisible(False)
         self.main_layout.addWidget(self.content)
+        
+        # Locked summary display (shown instead of content when case is locked)
+        self.locked_summary = QFrame()
+        self.locked_summary.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(50, 55, 60, 0.8);
+                border-radius: 8px;
+                padding: 12px;
+                margin: 8px 16px;
+            }}
+        """)
+        locked_summary_layout = QVBoxLayout(self.locked_summary)
+        locked_summary_layout.setContentsMargins(12, 8, 12, 8)
+        locked_summary_layout.setSpacing(6)
+        
+        # Lock icon and title
+        locked_title_layout = QHBoxLayout()
+        locked_icon = QLabel("🔒")
+        locked_icon.setStyleSheet("font-size: 14px; background: transparent;")
+        locked_title_layout.addWidget(locked_icon)
+        locked_title = QLabel("Locked Configuration")
+        locked_title.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; font-style: italic; background: transparent;")
+        locked_title_layout.addWidget(locked_title)
+        locked_title_layout.addStretch()
+        locked_summary_layout.addLayout(locked_title_layout)
+        
+        # Summary content label
+        self.locked_summary_label = QLabel("")
+        self.locked_summary_label.setStyleSheet(f"""
+            color: {COLORS['text_primary']};
+            font-size: 12px;
+            background: transparent;
+        """)
+        self.locked_summary_label.setWordWrap(True)
+        locked_summary_layout.addWidget(self.locked_summary_label)
+        
+        self.locked_summary.setVisible(False)
+        self.main_layout.addWidget(self.locked_summary)
     
     def _update_style(self):
         """Update visual style based on state. Uses property selectors for fast switching."""
@@ -1508,6 +1644,10 @@ class CaseEditor(QWidget):
             # Expanding - show content
             self.is_expanded = True
             self.content.setVisible(True)
+            
+            # If locked, apply locked visibility (limited UI)
+            if self._is_locked:
+                self._apply_locked_visibility()
         else:
             # Disabling - just collapse, DON'T clear data
             # User must explicitly click Clear to remove data
@@ -1517,6 +1657,29 @@ class CaseEditor(QWidget):
         self._update_style()
         self._update_clear_button_visibility()
         self.changed.emit()
+    
+    def _apply_locked_visibility(self):
+        """Apply locked UI visibility - shows only device name and outputs, all read-only."""
+        # Hide device selection row
+        self.device_row_widget.setVisible(False)
+        
+        # Show outputs container
+        self.outputs_container.setVisible(True)
+        
+        # Show only the selected device widget
+        device_id = self.device_combo.currentData()
+        for dev_id, device_widget in self.device_widgets.items():
+            device_widget.setVisible(dev_id == device_id)
+        
+        # Hide all editing sections
+        self.behavior_section.setVisible(False)
+        self.timer_section.setVisible(False)
+        self.conditions_section.setVisible(False)
+        
+        # Hide shortcut rows and warnings
+        self.track_ignition_row.setVisible(False)
+        self.popper_row.setVisible(False)
+        self.advanced_warning_row.setVisible(False)
     
     def _on_track_ignition_changed(self, state):
         """Handle track ignition checkbox - syncs with ignition_mode_combo"""
@@ -1794,6 +1957,9 @@ class CaseEditor(QWidget):
                     widget.setVisible(True)
                     widget.set_enabled(True)
                     widget.set_output_configs(device_output_dict[device_id])
+                    # Re-apply basic mode if we're in basic mode (to hide unconfigured outputs)
+                    if hasattr(self, '_current_view_mode') and self._current_view_mode == ViewMode.BASIC:
+                        widget.set_basic_mode(True)
                 else:
                     widget.setVisible(False)
                     widget.reset()
@@ -2078,6 +2244,112 @@ class CaseEditor(QWidget):
             self.track_ignition_row.setVisible(False)  # Hide in Admin (use full ignition_mode_combo)
             self.popper_row.setVisible(False)  # Hide in Admin (use full timer controls)
             self.advanced_warning_row.setVisible(False)  # No warning needed in Admin
+        
+        # IMPORTANT: Re-apply locked state if this case is locked
+        # This ensures view mode changes don't override the locked UI
+        if hasattr(self, '_is_locked') and self._is_locked:
+            self.set_locked(True)
+    
+    def set_locked(self, locked: bool):
+        """
+        Set the locked state for this case editor.
+        When locked, shows the same UI as basic mode but fully read-only.
+        
+        Args:
+            locked: True to lock the editor, False to unlock
+        """
+        self._is_locked = locked
+        
+        # Disable/enable the main enable checkbox and clear button
+        self.enable_check.setEnabled(not locked)
+        self.clear_btn.setEnabled(not locked)
+        
+        if locked:
+            # DON'T auto-expand - keep collapsed by default like non-locked cases
+            # The locked UI will be applied when user clicks to expand
+            
+            # Apply locked mode to all device widgets (shows device name + outputs, all disabled)
+            device_id = self.device_combo.currentData()
+            for dev_id, device_widget in self.device_widgets.items():
+                if dev_id == device_id:
+                    device_widget.set_locked_mode(True)
+                else:
+                    device_widget.setVisible(False)
+            
+            # ALWAYS apply locked visibility settings (even if collapsed)
+            # This ensures correct UI if the case is later expanded or view mode changes
+            self._apply_locked_visibility()
+            
+            # Hide the old basic_output_display and locked_summary
+            self.basic_output_display.setVisible(False)
+            self.locked_summary.setVisible(False)
+        else:
+            # Unlock - restore visibility based on view mode
+            self.locked_summary.setVisible(False)
+            self.basic_output_display.setVisible(False)
+            
+            # Remove locked mode from all device widgets
+            for device_widget in self.device_widgets.values():
+                device_widget.set_locked_mode(False)
+            
+            # Re-apply view mode settings to restore proper visibility
+            if hasattr(self, '_current_view_mode') and self._current_view_mode:
+                self.set_view_mode(self._current_view_mode)
+    
+    def _update_locked_summary(self):
+        """Update the locked summary display with current configuration."""
+        # Get device and outputs info
+        device_id = self.device_combo.currentData()
+        device = DEVICES.get(device_id) if device_id else None
+        
+        if not device:
+            self.locked_summary_label.setText("No output configured")
+            return
+        
+        # Get configured outputs
+        device_widget = self.device_widgets.get(device_id)
+        if not device_widget:
+            self.locked_summary_label.setText(f"<b>{device.name}</b>")
+            return
+        
+        output_lines = []
+        for output_widget in device_widget.output_widgets:
+            if output_widget.enable_check.isChecked():
+                output_name = output_widget.output_name
+                mode = output_widget.mode_combo.currentData()
+                if mode:
+                    mode_str = mode.name.replace('_', ' ').title()
+                    output_lines.append(f"• {output_name} — {mode_str}")
+                else:
+                    output_lines.append(f"• {output_name}")
+        
+        if output_lines:
+            summary_html = f"<b>📦 {device.name}</b><br>"
+            summary_html += "<br>".join(output_lines)
+        else:
+            summary_html = f"<b>{device.name}</b><br>No outputs configured"
+        
+        self.locked_summary_label.setText(summary_html)
+    
+    def set_ignition_controls_visible(self, visible: bool):
+        """
+        Show or hide ignition-related controls.
+        Used to hide these controls for IN01 since it IS the ignition input.
+        
+        Args:
+            visible: True to show ignition controls, False to hide them
+        """
+        # Hide/show ignition mode combo, its label, and info icon
+        self.ignition_mode_label.setVisible(visible)
+        self.ignition_mode_info.setVisible(visible)
+        self.ignition_mode_combo.setVisible(visible)
+        
+        # Hide/show require ignition checkbox and info icon
+        self.require_ignition_check.setVisible(visible)
+        self.require_ignition_info.setVisible(visible)
+        
+        # Hide/show track ignition checkbox (Basic mode shortcut) - only if visible AND in basic mode
+        self.track_ignition_row.setVisible(visible and self._current_view_mode == ViewMode.BASIC)
     
     def _update_basic_output_display(self):
         """Update the read-only output display for Basic mode."""
@@ -2176,9 +2448,11 @@ class CaseEditor(QWidget):
         must_on = self.must_on_dropdown.get_selected()
         must_off = self.must_off_dropdown.get_selected()
         if must_on:
-            advanced_settings.append(f"Must be ON: {', '.join(must_on)}")
+            must_on_str = ', '.join(f"IN{n:02d}" for n in must_on)
+            advanced_settings.append(f"Must be ON: {must_on_str}")
         if must_off:
-            advanced_settings.append(f"Must be OFF: {', '.join(must_off)}")
+            must_off_str = ', '.join(f"IN{n:02d}" for n in must_off)
+            advanced_settings.append(f"Must be OFF: {must_off_str}")
         
         # Show/hide warning
         if advanced_settings:
@@ -2202,6 +2476,7 @@ class InputConfigPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.current_input = None
+        self._current_view_mode = ViewMode.ADVANCED  # Default view mode
         self._setup_ui()
     
     def _setup_ui(self):
@@ -2222,6 +2497,39 @@ class InputConfigPanel(QWidget):
         self.case_count_label = QLabel("")
         self.case_count_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
         layout.addWidget(self.case_count_label)
+        
+        # Locked input warning (shown when input is locked in Basic/Advanced mode)
+        self.locked_warning = QFrame()
+        self.locked_warning.setStyleSheet(f"""
+            QFrame {{
+                background-color: rgba(255, 150, 50, 0.15);
+                border: 1px solid {COLORS['accent_orange']};
+                border-radius: 8px;
+                padding: 8px;
+                margin: 8px 0;
+            }}
+        """)
+        locked_layout = QHBoxLayout(self.locked_warning)
+        locked_layout.setContentsMargins(12, 8, 12, 8)
+        locked_layout.setSpacing(10)
+        
+        lock_icon = QLabel("🔒")
+        lock_icon.setStyleSheet("font-size: 18px; background: transparent;")
+        locked_layout.addWidget(lock_icon)
+        
+        self.locked_label = QLabel(
+            "This input is locked and cannot be edited in Basic or Advanced mode."
+        )
+        self.locked_label.setStyleSheet(f"""
+            color: {COLORS['accent_orange']};
+            font-size: 12px;
+            background: transparent;
+        """)
+        self.locked_label.setWordWrap(True)
+        locked_layout.addWidget(self.locked_label, 1)
+        
+        layout.addWidget(self.locked_warning)
+        self.locked_warning.setVisible(False)  # Hidden by default
         
         # Custom name
         name_layout = QHBoxLayout()
@@ -2311,6 +2619,12 @@ class InputConfigPanel(QWidget):
         # Update which case editors are visible for this input
         self._update_case_visibility(input_def.number)
         
+        # Update locked state based on current input and view mode
+        self._update_locked_state()
+        
+        # Update ignition controls visibility (hide for IN01 since it IS the ignition)
+        self._update_ignition_controls_visibility()
+        
         # Note: Don't reset editors here - set_config() will set all values directly
         # This avoids double-updating (reset then set)
     
@@ -2349,6 +2663,12 @@ class InputConfigPanel(QWidget):
         
         for i in range(min(off_count, len(self.off_case_editors), len(config.off_cases))):
             self.off_case_editors[i].set_config(config.off_cases[i], is_default=is_default)
+        
+        # Update Basic mode visibility (hide disabled cases in Basic mode)
+        self._update_basic_mode_visibility()
+        
+        # Re-apply locked state after config is set (ensures locked UI is shown)
+        self._update_locked_state()
     
     def set_view_mode(self, mode):
         """
@@ -2357,11 +2677,159 @@ class InputConfigPanel(QWidget):
         Args:
             mode: ViewMode enum (BASIC, ADVANCED, ADMIN)
         """
+        self._current_view_mode = mode
+        
         # Propagate to all case editors
         for editor in self.on_case_editors:
             editor.set_view_mode(mode)
         for editor in self.off_case_editors:
             editor.set_view_mode(mode)
+        
+        # Update case visibility based on mode
+        self._update_basic_mode_visibility()
+        
+        # Update locked state (may change based on mode)
+        self._update_locked_state()
+        
+        # Update ignition controls visibility (needs to be recalculated after view mode change)
+        self._update_ignition_controls_visibility()
+    
+    def _update_ignition_controls_visibility(self):
+        """
+        Update ignition controls visibility on all case editors.
+        
+        For IN01, ignition controls should be hidden because IN01 IS the ignition input.
+        It doesn't make sense to show "requires ignition", "track ignition", etc. on it.
+        """
+        if not self.current_input:
+            return
+        
+        # Hide ignition controls for IN01
+        show_ignition_controls = self.current_input.number != 1
+        
+        for editor in self.on_case_editors:
+            if hasattr(editor, 'set_ignition_controls_visible'):
+                editor.set_ignition_controls_visible(show_ignition_controls)
+        
+        for editor in self.off_case_editors:
+            if hasattr(editor, 'set_ignition_controls_visible'):
+                editor.set_ignition_controls_visible(show_ignition_controls)
+    
+    def _update_basic_mode_visibility(self):
+        """
+        In Basic mode, hide case editors that are not enabled.
+        In Advanced/Admin mode, show all available case editors.
+        """
+        if not self.current_input:
+            return
+        
+        on_count, off_count = get_case_counts(self.current_input.number)
+        is_basic = self._current_view_mode == ViewMode.BASIC
+        
+        # Track if we have any visible enabled cases
+        visible_on_count = 0
+        visible_off_count = 0
+        
+        # Update ON case visibility
+        for i, editor in enumerate(self.on_case_editors):
+            if i < on_count:
+                if is_basic:
+                    # In Basic mode, only show enabled cases
+                    is_enabled = editor.enable_check.isChecked()
+                    editor.setVisible(is_enabled)
+                    if is_enabled:
+                        visible_on_count += 1
+                else:
+                    # In Advanced/Admin mode, show all available cases
+                    editor.setVisible(True)
+                    visible_on_count += 1
+        
+        # Update OFF case visibility
+        for i, editor in enumerate(self.off_case_editors):
+            if i < off_count:
+                if is_basic:
+                    # In Basic mode, only show enabled cases
+                    is_enabled = editor.enable_check.isChecked()
+                    editor.setVisible(is_enabled)
+                    if is_enabled:
+                        visible_off_count += 1
+                else:
+                    # In Advanced/Admin mode, show all available cases
+                    editor.setVisible(True)
+                    visible_off_count += 1
+        
+        # Update OFF section label visibility
+        if is_basic:
+            # In Basic mode, hide OFF label if no OFF cases are enabled
+            self.off_label.setVisible(visible_off_count > 0)
+        else:
+            # In Advanced/Admin mode, show if there are any OFF cases available
+            self.off_label.setVisible(off_count > 0)
+    
+    def _update_locked_state(self):
+        """
+        Update the locked state based on current input and view mode.
+        
+        Basic mode: All cases locked for inputs in LOCKED_INPUTS_BASIC
+        Advanced mode: Only specific cases locked (based on LOCKED_CASES_BY_INPUT)
+        Admin mode: Nothing locked
+        """
+        if not self.current_input:
+            self.locked_warning.setVisible(False)
+            return
+        
+        input_id = f"IN{self.current_input.number:02d}"
+        current_mode = getattr(self, '_current_view_mode', ViewMode.ADVANCED)
+        
+        # Admin mode: nothing is locked
+        if current_mode == ViewMode.ADMIN:
+            self.locked_warning.setVisible(False)
+            self.custom_name_edit.setEnabled(True)
+            for editor in self.on_case_editors:
+                editor.set_locked(False)
+            for editor in self.off_case_editors:
+                editor.set_locked(False)
+            return
+        
+        # Basic mode: entire input is locked if in LOCKED_INPUTS_BASIC
+        if current_mode == ViewMode.BASIC:
+            is_fully_locked = input_id in LOCKED_INPUTS_BASIC
+            self.locked_warning.setVisible(is_fully_locked)
+            self.custom_name_edit.setEnabled(not is_fully_locked)
+            for editor in self.on_case_editors:
+                editor.set_locked(is_fully_locked)
+            for editor in self.off_case_editors:
+                editor.set_locked(is_fully_locked)
+            return
+        
+        # Advanced mode: case-level locking
+        locked_case_count = LOCKED_CASES_BY_INPUT.get(input_id, 0)
+        has_locked_cases = locked_case_count > 0
+        
+        # Show warning if any cases are locked
+        if has_locked_cases:
+            if locked_case_count == 1:
+                self.locked_label.setText(
+                    f"Case 1 is locked and cannot be edited. Additional cases can be added and configured freely in Advanced Mode."
+                )
+            else:
+                self.locked_label.setText(
+                    f"Cases 1 & 2 are locked and cannot be edited. Additional cases can be added and configured freely in Advanced Mode."
+                )
+            self.locked_warning.setVisible(True)
+        else:
+            self.locked_warning.setVisible(False)
+        
+        # Custom name NOT editable for locked inputs in Advanced mode
+        self.custom_name_edit.setEnabled(not has_locked_cases)
+        
+        # Lock only the first N cases based on LOCKED_CASES_BY_INPUT
+        for i, editor in enumerate(self.on_case_editors):
+            editor.set_locked(i < locked_case_count)
+        
+        # OFF cases are not locked in Advanced mode (only ON cases have the restriction)
+        for editor in self.off_case_editors:
+            editor.set_locked(False)
 
 
 class InputsPage(QWidget):
@@ -2462,7 +2930,12 @@ class InputsPage(QWidget):
             icon = ICONS['input_configured'] if has_config else ICONS['input_empty']
             display_name = input_config.custom_name if input_config.custom_name else inp.name
             
-            item = QListWidgetItem(f"{icon} IN{inp.number:02d}: {display_name}")
+            # Check if input has any locked cases
+            input_id = f"IN{inp.number:02d}"
+            has_locked_cases = input_id in LOCKED_CASES_BY_INPUT
+            lock_icon = "🔒 " if has_locked_cases else ""
+            
+            item = QListWidgetItem(f"{icon} {lock_icon}IN{inp.number:02d}: {display_name}")
             item.setData(Qt.ItemDataRole.UserRole, inp.number)
             
             if has_config:
@@ -2521,7 +2994,12 @@ class InputsPage(QWidget):
                     icon = ICONS['input_configured'] if has_config else ICONS['input_empty']
                     display_name = input_config.custom_name if input_config.custom_name else input_def.name
                     
-                    item.setText(f"{icon} IN{input_number:02d}: {display_name}")
+                    # Check if input has any locked cases
+                    input_id = f"IN{input_number:02d}"
+                    has_locked_cases = input_id in LOCKED_CASES_BY_INPUT
+                    lock_icon = "🔒 " if has_locked_cases else ""
+                    
+                    item.setText(f"{icon} {lock_icon}IN{input_number:02d}: {display_name}")
                     
                     if has_config:
                         item.setForeground(Qt.GlobalColor.white)
@@ -2586,14 +3064,7 @@ class InputsPage(QWidget):
         self._current_view_mode = mode
         
         # Update the config panel's view mode
+        # This internally propagates to all case editors and handles ignition visibility
         if hasattr(self.config_panel, 'set_view_mode'):
             self.config_panel.set_view_mode(mode)
-        
-        # Update all case editors
-        for editor in self.config_panel.on_case_editors:
-            if hasattr(editor, 'set_view_mode'):
-                editor.set_view_mode(mode)
-        for editor in self.config_panel.off_case_editors:
-            if hasattr(editor, 'set_view_mode'):
-                editor.set_view_mode(mode)
 
