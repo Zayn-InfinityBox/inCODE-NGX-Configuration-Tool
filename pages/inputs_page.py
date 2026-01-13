@@ -456,6 +456,37 @@ class OutputConfigWidget(QWidget):
             self.mode_combo.blockSignals(False)
             self.pwm_slider.blockSignals(False)
     
+    def set_basic_mode(self, basic_mode: bool):
+        """
+        Set basic mode - disables add/remove but allows mode changes.
+        Only shows configured outputs in basic mode.
+        
+        Args:
+            basic_mode: If True, disable checkbox but keep mode controls enabled.
+                       Also hides this widget if output is not enabled.
+        """
+        if basic_mode:
+            # In basic mode: only show if output is enabled
+            if not self.enable_check.isChecked():
+                self.setVisible(False)
+                return
+            
+            self.setVisible(True)
+            # Keep checkbox visible (shows output name) but disable it
+            self.enable_check.setEnabled(False)
+            # Mode combo should remain enabled
+            self.mode_combo.setEnabled(True)
+            # PWM slider should stay enabled if in PWM mode
+            if self.mode_combo.currentData() == OutputMode.PWM:
+                self.pwm_slider.setEnabled(True)
+        else:
+            # Normal mode: full control, show everything
+            self.setVisible(True)
+            self.enable_check.setEnabled(True)
+            # Mode combo state depends on whether output is enabled
+            self.mode_combo.setEnabled(self.enable_check.isChecked())
+            self.pwm_slider.setEnabled(self.enable_check.isChecked())
+    
     def reset(self):
         """Reset to default state. Blocks signals to prevent change cascade."""
         self.enable_check.blockSignals(True)
@@ -495,24 +526,30 @@ class DeviceOutputsWidget(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(4)
         
+        # Header widget (container for device checkbox and PGN label)
+        self.header_widget = QWidget()
+        self.header_widget.setStyleSheet("background: transparent;")
+        header_layout = QHBoxLayout(self.header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        
         if self.show_header:
             # Device header with enable checkbox (only if showing header)
-            header_layout = QHBoxLayout()
             self.device_check = QCheckBox(self.device.name)
             self.device_check.setFont(QFont("", 11, QFont.Weight.Bold))
             self.device_check.stateChanged.connect(self._on_device_toggled)
             header_layout.addWidget(self.device_check)
             
             pgn = f"0x{self.device.pgn_high:02X}{self.device.pgn_low:02X}"
-            pgn_label = QLabel(f"(PGN {pgn})")
-            pgn_label.setStyleSheet(f"color: {COLORS['text_muted']};")
-            header_layout.addWidget(pgn_label)
+            self.pgn_label = QLabel(f"(PGN {pgn})")
+            self.pgn_label.setStyleSheet(f"color: {COLORS['text_muted']};")
+            header_layout.addWidget(self.pgn_label)
             header_layout.addStretch()
-            layout.addLayout(header_layout)
+            layout.addWidget(self.header_widget)
         else:
             # No header - create a hidden checkbox just to track state
             self.device_check = QCheckBox()
-            self.device_check.setVisible(False)
+            self.header_widget.setVisible(False)
+            self.pgn_label = None
         
         # Outputs container
         self.outputs_container = QWidget()
@@ -521,10 +558,10 @@ class DeviceOutputsWidget(QWidget):
         outputs_layout.setContentsMargins(0 if not self.show_header else 20, 4, 0, 4)
         outputs_layout.setSpacing(4)
         
-        # Label for selecting outputs
-        outputs_label = QLabel("Check the outputs you want to control:")
-        outputs_label.setStyleSheet(f"color: {COLORS['accent_primary']}; font-weight: 700; font-size: 13px; margin-bottom: 8px; background: transparent;")
-        outputs_layout.addWidget(outputs_label)
+        # Label for selecting outputs (hidden in basic mode)
+        self.outputs_label = QLabel("Check the outputs you want to control:")
+        self.outputs_label.setStyleSheet(f"color: {COLORS['accent_primary']}; font-weight: 700; font-size: 13px; margin-bottom: 8px; background: transparent;")
+        outputs_layout.addWidget(self.outputs_label)
         
         # Create output widgets
         for i, output_name in enumerate(self.device.outputs):
@@ -599,6 +636,38 @@ class DeviceOutputsWidget(QWidget):
                 widget.reset()
         finally:
             self.device_check.blockSignals(False)
+    
+    def set_basic_mode(self, basic_mode: bool):
+        """
+        Set basic mode on all output widgets.
+        
+        Args:
+            basic_mode: If True, disable add/remove but allow mode changes.
+                       Hides non-configured outputs and instructional elements.
+        """
+        if basic_mode:
+            # Hide header (device checkbox and PGN label)
+            self.header_widget.setVisible(False)
+            # Hide instructional label
+            self.outputs_label.setVisible(False)
+            
+            # Check if ANY output is configured - if not, hide entire widget
+            has_configured = any(w.enable_check.isChecked() for w in self.output_widgets)
+            if not has_configured:
+                self.setVisible(False)
+                return
+            
+            self.setVisible(True)
+        else:
+            # Normal mode: show everything
+            if self.show_header:
+                self.header_widget.setVisible(True)
+            self.outputs_label.setVisible(True)
+            self.setVisible(True)
+        
+        # Propagate to all output widgets
+        for widget in self.output_widgets:
+            widget.set_basic_mode(basic_mode)
 
 
 class CaseEditor(QWidget):
@@ -942,6 +1011,127 @@ class CaseEditor(QWidget):
         
         mode_pattern_row.addStretch()
         behavior_layout.addLayout(mode_pattern_row)
+        
+        # Track Ignition shortcut row (visible in Basic mode, syncs with ignition_mode_combo)
+        self.track_ignition_row = QWidget()
+        self.track_ignition_row.setStyleSheet("background: transparent;")
+        track_ignition_layout = QHBoxLayout(self.track_ignition_row)
+        track_ignition_layout.setContentsMargins(0, 4, 0, 0)
+        track_ignition_layout.setSpacing(8)
+        
+        self.track_ignition_check = QCheckBox("Track Ignition")
+        self.track_ignition_check.setStyleSheet(f"""
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                font-size: 12px;
+                spacing: 8px;
+                background: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                border: none;
+                background: rgba(80, 80, 80, 0.95);
+            }}
+            QCheckBox::indicator:checked {{
+                background: {COLORS['accent_primary']};
+            }}
+            QCheckBox::indicator:hover {{
+                background: rgba(100, 100, 100, 1.0);
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background: {COLORS['accent_secondary']};
+            }}
+        """)
+        self.track_ignition_check.stateChanged.connect(self._on_track_ignition_changed)
+        track_ignition_layout.addWidget(self.track_ignition_check)
+        
+        track_ignition_layout.addWidget(InfoIcon(
+            "Track Ignition: This case will automatically activate when\n"
+            "the ignition is ON, and deactivate when ignition is OFF.\n\n"
+            "Use for outputs that should follow the vehicle's ignition\n"
+            "state, like gauge illumination or accessories."
+        ))
+        
+        track_ignition_layout.addStretch()
+        behavior_layout.addWidget(self.track_ignition_row)
+        
+        # Hide by default (shown in Basic mode)
+        self.track_ignition_row.setVisible(False)
+        
+        # Configure as Popper shortcut row (visible in Basic mode)
+        self.popper_row = QWidget()
+        self.popper_row.setStyleSheet("background: transparent;")
+        popper_layout = QHBoxLayout(self.popper_row)
+        popper_layout.setContentsMargins(0, 4, 0, 0)
+        popper_layout.setSpacing(8)
+        
+        self.popper_check = QCheckBox("Configure as Popper")
+        self.popper_check.setStyleSheet(f"""
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                font-size: 12px;
+                spacing: 8px;
+                background: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                border: none;
+                background: rgba(80, 80, 80, 0.95);
+            }}
+            QCheckBox::indicator:checked {{
+                background: {COLORS['accent_primary']};
+            }}
+            QCheckBox::indicator:hover {{
+                background: rgba(100, 100, 100, 1.0);
+            }}
+            QCheckBox::indicator:checked:hover {{
+                background: {COLORS['accent_secondary']};
+            }}
+        """)
+        self.popper_check.stateChanged.connect(self._on_popper_changed)
+        popper_layout.addWidget(self.popper_check)
+        
+        popper_layout.addWidget(InfoIcon(
+            "Configure as Popper: Sets up a 0.5 second fire-and-forget timer.\n\n"
+            "When the input is triggered, the output will turn ON for 0.5 seconds\n"
+            "then automatically turn OFF. Perfect for hood/trunk poppers,\n"
+            "momentary relays, or any output that needs a quick pulse."
+        ))
+        
+        popper_layout.addStretch()
+        behavior_layout.addWidget(self.popper_row)
+        
+        # Hide by default (shown in Basic mode)
+        self.popper_row.setVisible(False)
+        
+        # Advanced settings warning (shown in Basic mode when advanced settings are active)
+        self.advanced_warning_row = QWidget()
+        self.advanced_warning_row.setStyleSheet("background: transparent;")
+        warning_layout = QHBoxLayout(self.advanced_warning_row)
+        warning_layout.setContentsMargins(0, 8, 0, 0)
+        warning_layout.setSpacing(6)
+        
+        warning_icon = QLabel("⚠️")
+        warning_icon.setStyleSheet("font-size: 14px; background: transparent;")
+        warning_layout.addWidget(warning_icon)
+        
+        self.advanced_warning_label = QLabel("")
+        self.advanced_warning_label.setStyleSheet(f"""
+            color: {COLORS['accent_orange']};
+            font-size: 11px;
+            font-style: italic;
+            background: transparent;
+        """)
+        self.advanced_warning_label.setWordWrap(True)
+        warning_layout.addWidget(self.advanced_warning_label, 1)
+        
+        behavior_layout.addWidget(self.advanced_warning_row)
+        self.advanced_warning_row.setVisible(False)  # Hidden by default
+        
         content_layout.addWidget(self.behavior_section)
         
         # =====================================================================
@@ -1328,6 +1518,51 @@ class CaseEditor(QWidget):
         self._update_clear_button_visibility()
         self.changed.emit()
     
+    def _on_track_ignition_changed(self, state):
+        """Handle track ignition checkbox - syncs with ignition_mode_combo"""
+        if state == Qt.CheckState.Checked.value:
+            # Set ignition mode to track_ignition
+            idx = self.ignition_mode_combo.findData("track_ignition")
+            if idx >= 0:
+                self.ignition_mode_combo.blockSignals(True)
+                self.ignition_mode_combo.setCurrentIndex(idx)
+                self.ignition_mode_combo.blockSignals(False)
+        else:
+            # Set ignition mode back to normal
+            idx = self.ignition_mode_combo.findData("normal")
+            if idx >= 0:
+                self.ignition_mode_combo.blockSignals(True)
+                self.ignition_mode_combo.setCurrentIndex(idx)
+                self.ignition_mode_combo.blockSignals(False)
+        self.changed.emit()
+    
+    def _on_popper_changed(self, state):
+        """Handle popper checkbox - sets up fire-and-forget timer of 0.5s"""
+        if state == Qt.CheckState.Checked.value:
+            # Set timer to fire-and-forget, 0.5s (2 × 0.25s)
+            self.timer_exec_mode_combo.blockSignals(True)
+            self.timer_delay_spin.blockSignals(True)
+            self.timer_delay_scale_combo.blockSignals(True)
+            self.timer_on_spin.blockSignals(True)
+            self.timer_on_scale_combo.blockSignals(True)
+            
+            self.timer_exec_mode_combo.setCurrentIndex(0)  # Fire-and-Forget
+            self.timer_delay_spin.setValue(0)  # No delay
+            self.timer_delay_scale_combo.setCurrentIndex(0)  # 0.25s scale
+            self.timer_on_spin.setValue(2)  # 2 × 0.25s = 0.5s
+            self.timer_on_scale_combo.setCurrentIndex(0)  # 0.25s scale
+            
+            self.timer_exec_mode_combo.blockSignals(False)
+            self.timer_delay_spin.blockSignals(False)
+            self.timer_delay_scale_combo.blockSignals(False)
+            self.timer_on_spin.blockSignals(False)
+            self.timer_on_scale_combo.blockSignals(False)
+            
+            # Update timer display
+            self._update_timer_display()
+        # Note: unchecking doesn't clear the timer - user might want to keep it
+        self.changed.emit()
+    
     def _on_clear_clicked(self):
         """Explicitly clear all case data when user clicks Clear button"""
         reply = QMessageBox.question(
@@ -1393,6 +1628,12 @@ class CaseEditor(QWidget):
         self.timer_on_result.setText("= 0s (∞)")
         # Clear option flags
         self.ignition_mode_combo.setCurrentIndex(0)  # Normal
+        self.track_ignition_check.blockSignals(True)
+        self.track_ignition_check.setChecked(False)
+        self.track_ignition_check.blockSignals(False)
+        self.popper_check.blockSignals(True)
+        self.popper_check.setChecked(False)
+        self.popper_check.blockSignals(False)
         self.can_override_check.setChecked(False)
         self.require_ignition_check.setChecked(False)
         self.must_on_dropdown.clear_selection()
@@ -1400,6 +1641,11 @@ class CaseEditor(QWidget):
     
     def _on_device_changed(self, index):
         """Show only the outputs for the selected device"""
+        self._refresh_device_visibility()
+        self.changed.emit()
+    
+    def _refresh_device_visibility(self):
+        """Refresh device widget visibility based on current selection."""
         selected_device_id = self.device_combo.currentData()
         
         # Hide all device widgets, show only the selected one
@@ -1409,9 +1655,7 @@ class CaseEditor(QWidget):
                 widget.set_enabled(True)  # Auto-enable outputs section
             else:
                 widget.setVisible(False)
-                widget.reset()  # Reset hidden devices
-        
-        self.changed.emit()
+                # Don't reset here - we want to preserve the data
     
     def _update_timer_display(self):
         """Update the calculated timer duration labels"""
@@ -1597,6 +1841,26 @@ class CaseEditor(QWidget):
             else:
                 self.ignition_mode_combo.setCurrentIndex(0)  # Default to Normal
             
+            # Sync track ignition checkbox with ignition_mode
+            self.track_ignition_check.blockSignals(True)
+            self.track_ignition_check.setChecked(ignition_mode == "track_ignition")
+            self.track_ignition_check.blockSignals(False)
+            
+            # Sync popper checkbox - check if timer matches popper config (0.5s fire-and-forget)
+            exec_mode = getattr(config, 'timer_exec_mode', 'fire_and_forget')
+            timer_delay = getattr(config, 'timer_delay_value', 0)
+            timer_on = getattr(config, 'timer_on_value', 0)
+            timer_on_scale = getattr(config, 'timer_on_scale_10s', False)
+            is_popper_config = (
+                exec_mode == 'fire_and_forget' and
+                timer_delay == 0 and
+                timer_on == 2 and
+                timer_on_scale == False  # 0.25s scale, so 2 × 0.25s = 0.5s
+            )
+            self.popper_check.blockSignals(True)
+            self.popper_check.setChecked(is_popper_config)
+            self.popper_check.blockSignals(False)
+            
             self.can_override_check.setChecked(getattr(config, 'can_be_overridden', False))
             self.require_ignition_check.setChecked(getattr(config, 'require_ignition_on', False))
             
@@ -1700,6 +1964,8 @@ class CaseEditor(QWidget):
             
             # Reset option flags
             self.ignition_mode_combo.setCurrentIndex(0)  # Normal
+            self.track_ignition_check.setChecked(False)  # Sync with ignition_mode
+            self.popper_check.setChecked(False)  # Clear popper shortcut
             self.can_override_check.setChecked(False)
             self.require_ignition_check.setChecked(False)
             
@@ -1733,12 +1999,16 @@ class CaseEditor(QWidget):
         
         if mode == ViewMode.BASIC:
             # BASIC: Simplified interface
-            # Hide device selection and output checkboxes
+            # Hide device selection dropdown (can't change device)
             self.device_row_widget.setVisible(False)
-            self.outputs_container.setVisible(False)
-            # Show read-only output display instead
-            self.basic_output_display.setVisible(True)
-            self._update_basic_output_display()
+            # Show outputs container (users can change mode but not add/remove)
+            self.outputs_container.setVisible(True)
+            # Hide the read-only display (we're showing actual controls)
+            self.basic_output_display.setVisible(False)
+            
+            # Enable basic mode on all device widgets (disables checkboxes, keeps mode dropdowns)
+            for device_widget in self.device_widgets.values():
+                device_widget.set_basic_mode(True)
             
             # Hide timer section
             if hasattr(self, 'timer_section'):
@@ -1746,9 +2016,14 @@ class CaseEditor(QWidget):
             # Hide conditions section (must_be_on/off)
             if hasattr(self, 'conditions_section'):
                 self.conditions_section.setVisible(False)
-            # Hide advanced options
+            # Hide advanced options - but show shortcuts
             self.can_override_check.setVisible(False)
             self.ignition_mode_combo.setVisible(False)
+            self.track_ignition_row.setVisible(True)  # Show track ignition shortcut
+            self.popper_row.setVisible(True)  # Show popper shortcut
+            
+            # Sync shortcuts with current control values
+            self._sync_shortcuts_from_controls()
             
             # Keep behavior section visible (mode/pattern)
             if hasattr(self, 'behavior_section'):
@@ -1760,6 +2035,13 @@ class CaseEditor(QWidget):
             self.outputs_container.setVisible(True)
             self.basic_output_display.setVisible(False)
             
+            # Disable basic mode (full control)
+            for device_widget in self.device_widgets.values():
+                device_widget.set_basic_mode(False)
+            
+            # Refresh device visibility to show only selected device
+            self._refresh_device_visibility()
+            
             if hasattr(self, 'timer_section'):
                 self.timer_section.setVisible(True)
             if hasattr(self, 'conditions_section'):
@@ -1768,6 +2050,9 @@ class CaseEditor(QWidget):
                 self.behavior_section.setVisible(True)
             self.can_override_check.setVisible(True)
             self.ignition_mode_combo.setVisible(True)
+            self.track_ignition_row.setVisible(False)  # Hide in Advanced (use full ignition_mode_combo)
+            self.popper_row.setVisible(False)  # Hide in Advanced (use full timer controls)
+            self.advanced_warning_row.setVisible(False)  # No warning needed in Advanced
             
         elif mode == ViewMode.ADMIN:
             # ADMIN: Show everything
@@ -1775,6 +2060,13 @@ class CaseEditor(QWidget):
             self.outputs_container.setVisible(True)
             self.basic_output_display.setVisible(False)
             
+            # Disable basic mode (full control)
+            for device_widget in self.device_widgets.values():
+                device_widget.set_basic_mode(False)
+            
+            # Refresh device visibility to show only selected device
+            self._refresh_device_visibility()
+            
             if hasattr(self, 'timer_section'):
                 self.timer_section.setVisible(True)
             if hasattr(self, 'conditions_section'):
@@ -1783,6 +2075,9 @@ class CaseEditor(QWidget):
                 self.behavior_section.setVisible(True)
             self.can_override_check.setVisible(True)
             self.ignition_mode_combo.setVisible(True)
+            self.track_ignition_row.setVisible(False)  # Hide in Admin (use full ignition_mode_combo)
+            self.popper_row.setVisible(False)  # Hide in Admin (use full timer controls)
+            self.advanced_warning_row.setVisible(False)  # No warning needed in Admin
     
     def _update_basic_output_display(self):
         """Update the read-only output display for Basic mode."""
@@ -1809,8 +2104,10 @@ class CaseEditor(QWidget):
                 # Check for mode (soft start, PWM, etc.)
                 if hasattr(output_widget, 'mode_combo'):
                     mode = output_widget.mode_combo.currentData()
-                    if mode and mode != "normal":
-                        display_name += f" ({mode.replace('_', ' ').title()})"
+                    if mode and mode != OutputMode.OFF:
+                        # mode is an OutputMode enum, use its name
+                        mode_str = mode.name.replace('_', ' ').title()
+                        display_name += f" ({mode_str})"
                 selected_outputs.append(display_name)
         
         if selected_outputs:
@@ -1820,6 +2117,77 @@ class CaseEditor(QWidget):
             self.basic_output_label.setText(output_text)
         else:
             self.basic_output_label.setText("No outputs selected")
+    
+    def _sync_shortcuts_from_controls(self):
+        """
+        Sync shortcut checkboxes with current control values.
+        Called when switching to Basic mode to reflect any changes made in Advanced/Admin.
+        Also detects and warns about advanced settings that aren't visible in Basic mode.
+        """
+        # Sync Track Ignition checkbox with ignition_mode_combo
+        current_ignition_mode = self.ignition_mode_combo.currentData()
+        self.track_ignition_check.blockSignals(True)
+        self.track_ignition_check.setChecked(current_ignition_mode == "track_ignition")
+        self.track_ignition_check.blockSignals(False)
+        
+        # Sync Popper checkbox with timer settings
+        # Popper = Fire-and-Forget, 0 delay, 2 × 0.25s = 0.5s
+        exec_mode = self.timer_exec_mode_combo.currentData()
+        timer_delay = self.timer_delay_spin.value()
+        timer_on = self.timer_on_spin.value()
+        timer_on_scale = self.timer_on_scale_combo.currentData()  # False = 0.25s, True = 10s
+        
+        is_popper_config = (
+            exec_mode == 'fire_and_forget' and
+            timer_delay == 0 and
+            timer_on == 2 and
+            timer_on_scale == False  # 0.25s scale
+        )
+        self.popper_check.blockSignals(True)
+        self.popper_check.setChecked(is_popper_config)
+        self.popper_check.blockSignals(False)
+        
+        # Check for advanced settings not visible in Basic mode
+        advanced_settings = []
+        
+        # Check ignition mode (only "normal" and "track_ignition" available in Basic)
+        if current_ignition_mode == "set_ignition":
+            advanced_settings.append("Sets Ignition mode")
+        
+        # Check for custom timer (not 0 and not popper config)
+        has_custom_timer = (timer_on > 0 or timer_delay > 0) and not is_popper_config
+        if has_custom_timer:
+            # Calculate actual time for display
+            if timer_on_scale:  # 10s scale
+                on_time = timer_on * 10
+            else:  # 0.25s scale
+                on_time = timer_on * 0.25
+            advanced_settings.append(f"Custom timer ({on_time}s)")
+        
+        # Check can be overridden
+        if self.can_override_check.isChecked():
+            advanced_settings.append("Can be overridden")
+        
+        # Check require ignition
+        if self.require_ignition_check.isChecked():
+            advanced_settings.append("Requires ignition")
+        
+        # Check must be on/off conditions
+        must_on = self.must_on_dropdown.get_selected()
+        must_off = self.must_off_dropdown.get_selected()
+        if must_on:
+            advanced_settings.append(f"Must be ON: {', '.join(must_on)}")
+        if must_off:
+            advanced_settings.append(f"Must be OFF: {', '.join(must_off)}")
+        
+        # Show/hide warning
+        if advanced_settings:
+            warning_text = "Advanced settings active: " + " • ".join(advanced_settings)
+            warning_text += "\nSwitch to Advanced mode to view or modify."
+            self.advanced_warning_label.setText(warning_text)
+            self.advanced_warning_row.setVisible(True)
+        else:
+            self.advanced_warning_row.setVisible(False)
 
 
 class InputConfigPanel(QWidget):
