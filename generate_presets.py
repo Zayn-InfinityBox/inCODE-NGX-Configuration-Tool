@@ -50,6 +50,30 @@ def byte_to_outputs(data_byte, byte_index=0):
     return outputs
 
 
+def create_inmotion_case(device_id, output_num, mode=OutputMode.ON):
+    """Create an inMOTION motor control case.
+    
+    Args:
+        device_id: The inMOTION device ID (inmotion_1, inmotion_2, etc.)
+        output_num: The output/channel number (1-8)
+        mode: OutputMode.ON (for ON cases), OutputMode.OFF (for OFF cases), or OutputMode.ALL_MOTORS
+    """
+    case = CaseConfig()
+    case.enabled = True
+    case.mode = "track"
+    case.pattern_preset = "none"
+    case.pattern_on_time = 0
+    case.pattern_off_time = 0
+    
+    # Create output config for the specified output
+    output_configs = {
+        output_num: OutputConfig(enabled=True, mode=mode, pwm_duty=0, inmotion_timer=0)
+    }
+    case.device_outputs = [(device_id, output_configs)]
+    
+    return case
+
+
 def create_case(device_id, outputs, mode=OutputMode.TRACK, pattern_on=0, pattern_off=0, 
                 must_be_on=None, ignition_mode="normal", 
                 timer_on_value=0, timer_on_scale_10s=False,
@@ -322,38 +346,79 @@ def generate_front_engine():
     inp.custom_name = "Open/inRESERVE"
     inp.on_cases[0] = create_case("powercell_rear", [9])
     
-    # ===== IN23 - Door Lock =====
+    # ===== IN23 - Door Lock (All Windows UP) =====
+    # All inMOTION devices, Output 3 (Data[2]) = 0xA2
     inp = config.inputs[22]
     inp.custom_name = "Door Lock"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 3, OutputMode.ALL_MOTORS)
+    inp.on_cases[1] = create_inmotion_case("inmotion_2", 3, OutputMode.ALL_MOTORS)
+    inp.on_cases[2] = create_inmotion_case("inmotion_3", 3, OutputMode.ALL_MOTORS)
+    inp.on_cases[3] = create_inmotion_case("inmotion_4", 3, OutputMode.ALL_MOTORS)
     
-    # ===== IN24 - Door Unlock =====
+    # ===== IN24 - Door Unlock (All Windows DOWN) =====
+    # All inMOTION devices, Output 4 (Data[3]) = 0xA2
     inp = config.inputs[23]
     inp.custom_name = "Door Unlock"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 4, OutputMode.ALL_MOTORS)
+    inp.on_cases[1] = create_inmotion_case("inmotion_2", 4, OutputMode.ALL_MOTORS)
+    inp.on_cases[2] = create_inmotion_case("inmotion_3", 4, OutputMode.ALL_MOTORS)
+    inp.on_cases[3] = create_inmotion_case("inmotion_4", 4, OutputMode.ALL_MOTORS)
     
-    # ===== IN25-IN32 - Window Controls =====
+    # ===== IN25 - Driver Front Window UP =====
+    # inMOTION 1 (FF03), Output 1 (Data[0]) = 0x90
     inp = config.inputs[24]
     inp.custom_name = "Window DF Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_1", 1, OutputMode.OFF)
     
+    # ===== IN26 - Passenger Front Window UP =====
+    # inMOTION 1 (FF03), Output 2 (Data[1]) = 0x90
     inp = config.inputs[25]
     inp.custom_name = "Window PF Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_1", 2, OutputMode.OFF)
     
+    # ===== IN27 - Driver Rear Window UP =====
+    # inMOTION 2 (FF04), Output 1 (Data[0]) = 0x90
     inp = config.inputs[26]
     inp.custom_name = "Window DR Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_2", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_2", 1, OutputMode.OFF)
     
+    # ===== IN28 - Passenger Rear Window UP =====
+    # inMOTION 2 (FF04), Output 2 (Data[1]) = 0x90
     inp = config.inputs[27]
     inp.custom_name = "Window PR Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_2", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_2", 2, OutputMode.OFF)
     
+    # ===== IN29 - Driver Front Window DOWN =====
+    # inMOTION 3 (FF05), Output 1 (Data[0]) = 0x90
     inp = config.inputs[28]
     inp.custom_name = "Window DF Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_3", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_3", 1, OutputMode.OFF)
     
+    # ===== IN30 - Passenger Front Window DOWN =====
+    # inMOTION 3 (FF05), Output 2 (Data[1]) = 0x90
     inp = config.inputs[29]
     inp.custom_name = "Window PF Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_3", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_3", 2, OutputMode.OFF)
     
+    # ===== IN31 - Driver Rear Window DOWN =====
+    # inMOTION 4 (FF06), Output 1 (Data[0]) = 0x90
     inp = config.inputs[30]
     inp.custom_name = "Window DR Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_4", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_4", 1, OutputMode.OFF)
     
+    # ===== IN32 - Passenger Rear Window DOWN =====
+    # inMOTION 4 (FF06), Output 2 (Data[1]) = 0x90
     inp = config.inputs[31]
     inp.custom_name = "Window PR Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_4", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_4", 2, OutputMode.OFF)
     
     # ===== IN33-IN38 - Aux Inputs =====
     for i in range(32, 38):
@@ -594,38 +659,79 @@ def generate_rear_engine():
     inp.custom_name = "Open/inRESERVE"
     inp.on_cases[0] = create_case("powercell_rear", [9])
     
-    # ===== IN23 - Door Lock =====
+    # ===== IN23 - Door Lock (All Windows UP) =====
+    # All inMOTION devices, Output 3 (Data[2]) = 0xA2
     inp = config.inputs[22]
     inp.custom_name = "Door Lock"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 3, OutputMode.ALL_MOTORS)
+    inp.on_cases[1] = create_inmotion_case("inmotion_2", 3, OutputMode.ALL_MOTORS)
+    inp.on_cases[2] = create_inmotion_case("inmotion_3", 3, OutputMode.ALL_MOTORS)
+    inp.on_cases[3] = create_inmotion_case("inmotion_4", 3, OutputMode.ALL_MOTORS)
     
-    # ===== IN24 - Door Unlock =====
+    # ===== IN24 - Door Unlock (All Windows DOWN) =====
+    # All inMOTION devices, Output 4 (Data[3]) = 0xA2
     inp = config.inputs[23]
     inp.custom_name = "Door Unlock"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 4, OutputMode.ALL_MOTORS)
+    inp.on_cases[1] = create_inmotion_case("inmotion_2", 4, OutputMode.ALL_MOTORS)
+    inp.on_cases[2] = create_inmotion_case("inmotion_3", 4, OutputMode.ALL_MOTORS)
+    inp.on_cases[3] = create_inmotion_case("inmotion_4", 4, OutputMode.ALL_MOTORS)
     
-    # ===== IN25-IN32 - Window Controls =====
+    # ===== IN25 - Driver Front Window UP =====
+    # inMOTION 1 (FF03), Output 1 (Data[0]) = 0x90
     inp = config.inputs[24]
     inp.custom_name = "Window DF Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_1", 1, OutputMode.OFF)
     
+    # ===== IN26 - Passenger Front Window UP =====
+    # inMOTION 1 (FF03), Output 2 (Data[1]) = 0x90
     inp = config.inputs[25]
     inp.custom_name = "Window PF Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_1", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_1", 2, OutputMode.OFF)
     
+    # ===== IN27 - Driver Rear Window UP =====
+    # inMOTION 2 (FF04), Output 1 (Data[0]) = 0x90
     inp = config.inputs[26]
     inp.custom_name = "Window DR Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_2", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_2", 1, OutputMode.OFF)
     
+    # ===== IN28 - Passenger Rear Window UP =====
+    # inMOTION 2 (FF04), Output 2 (Data[1]) = 0x90
     inp = config.inputs[27]
     inp.custom_name = "Window PR Up"
+    inp.on_cases[0] = create_inmotion_case("inmotion_2", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_2", 2, OutputMode.OFF)
     
+    # ===== IN29 - Driver Front Window DOWN =====
+    # inMOTION 3 (FF05), Output 1 (Data[0]) = 0x90
     inp = config.inputs[28]
     inp.custom_name = "Window DF Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_3", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_3", 1, OutputMode.OFF)
     
+    # ===== IN30 - Passenger Front Window DOWN =====
+    # inMOTION 3 (FF05), Output 2 (Data[1]) = 0x90
     inp = config.inputs[29]
     inp.custom_name = "Window PF Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_3", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_3", 2, OutputMode.OFF)
     
+    # ===== IN31 - Driver Rear Window DOWN =====
+    # inMOTION 4 (FF06), Output 1 (Data[0]) = 0x90
     inp = config.inputs[30]
     inp.custom_name = "Window DR Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_4", 1, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_4", 1, OutputMode.OFF)
     
+    # ===== IN32 - Passenger Rear Window DOWN =====
+    # inMOTION 4 (FF06), Output 2 (Data[1]) = 0x90
     inp = config.inputs[31]
     inp.custom_name = "Window PR Down"
+    inp.on_cases[0] = create_inmotion_case("inmotion_4", 2, OutputMode.ON)
+    inp.off_cases[0] = create_inmotion_case("inmotion_4", 2, OutputMode.OFF)
     
     # ===== IN33-IN38 - Aux Inputs =====
     for i in range(32, 38):
@@ -657,7 +763,7 @@ if __name__ == "__main__":
     front_config = generate_front_engine()
     save_config(
         front_config,
-        "presets/front_engine.json",
+        "resources/presets/front_engine.json",
         "Front Engine Configuration",
         "Standard configuration for front-engine vehicles. "
         "Engine accessories (ignition relay, starter, cooling fan) controlled via POWERCELL Front. "
@@ -668,7 +774,7 @@ if __name__ == "__main__":
     rear_config = generate_rear_engine()
     save_config(
         rear_config,
-        "presets/rear_engine.json",
+        "resources/presets/rear_engine.json",
         "Rear Engine Configuration",
         "Configuration for rear-engine vehicles (mid-engine, rear-mounted). "
         "Engine accessories (ignition relay, starter, fuel pump) controlled via POWERCELL Rear. "

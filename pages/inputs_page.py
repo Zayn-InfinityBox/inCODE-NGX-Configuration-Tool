@@ -306,11 +306,13 @@ class OutputConfigWidget(QWidget):
     
     changed = pyqtSignal()
     
-    def __init__(self, output_num: int, output_name: str, supports_pwm: bool = True, parent=None):
+    def __init__(self, output_num: int, output_name: str, supports_pwm: bool = True, device_type: str = "powercell", case_type: str = "on", parent=None):
         super().__init__(parent)
         self.output_num = output_num
         self.output_name = output_name
         self.supports_pwm = supports_pwm
+        self.device_type = device_type  # "powercell" or "inmotion"
+        self.case_type = case_type  # "on" or "off" - determines which modes are available
         self.config = OutputConfig()
         self.setStyleSheet("background: transparent;")
         
@@ -363,12 +365,26 @@ class OutputConfigWidget(QWidget):
         mode_card_layout.setContentsMargins(10, 6, 10, 6)
         mode_card_layout.setSpacing(10)
         
-        # Mode dropdown
+        # Mode dropdown - different modes for POWERCELL vs inMOTION, filtered by case type
         self.mode_combo = NoScrollComboBox()
-        self.mode_combo.addItem("Track", OutputMode.TRACK)
-        self.mode_combo.addItem("Soft-Start", OutputMode.SOFT_START)
-        if self.supports_pwm:
-            self.mode_combo.addItem("PWM", OutputMode.PWM)
+        if self.device_type == "inmotion":
+            if self.case_type == "on":
+                # ON cases: ON, Timed, All Motors
+                self.mode_combo.addItem("ON", OutputMode.ON)
+                # Timed mode with configurable timer
+                self.mode_combo.addItem("Timed", OutputMode.TIMED)
+                # All motors command for outputs 3-4 (byte positions 2-3) - used for lock/unlock
+                if self.output_num in (3, 4):
+                    self.mode_combo.addItem("All Motors", OutputMode.ALL_MOTORS)
+            else:
+                # OFF cases: OFF only
+                self.mode_combo.addItem("OFF", OutputMode.OFF)
+        else:
+            # POWERCELL modes (same for ON and OFF cases)
+            self.mode_combo.addItem("Track", OutputMode.TRACK)
+            self.mode_combo.addItem("Soft-Start", OutputMode.SOFT_START)
+            if self.supports_pwm:
+                self.mode_combo.addItem("PWM", OutputMode.PWM)
         self.mode_combo.setMinimumWidth(105)
         self.mode_combo.setMinimumHeight(32)
         self.mode_combo.setStyleSheet(f"""
@@ -381,7 +397,7 @@ class OutputConfigWidget(QWidget):
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         mode_card_layout.addWidget(self.mode_combo)
         
-        # PWM duty cycle
+        # PWM duty cycle (POWERCELL only)
         self.pwm_label = QLabel("Duty:")
         self.pwm_label.setStyleSheet("background: transparent;")
         self.pwm_label.setVisible(False)
@@ -401,6 +417,26 @@ class OutputConfigWidget(QWidget):
         self.pwm_value.setVisible(False)
         mode_card_layout.addWidget(self.pwm_value)
         
+        # inMOTION timer (inMOTION only)
+        self.timer_label = QLabel("Timer:")
+        self.timer_label.setStyleSheet("background: transparent;")
+        self.timer_label.setVisible(False)
+        mode_card_layout.addWidget(self.timer_label)
+        
+        self.timer_slider = QSlider(Qt.Orientation.Horizontal)
+        self.timer_slider.setRange(0, 15)
+        self.timer_slider.setValue(0)
+        self.timer_slider.setMinimumWidth(100)
+        self.timer_slider.setVisible(False)
+        self.timer_slider.valueChanged.connect(self._on_timer_changed)
+        mode_card_layout.addWidget(self.timer_slider)
+        
+        self.timer_value = QLabel("0s")
+        self.timer_value.setMinimumWidth(45)
+        self.timer_value.setStyleSheet("background: transparent;")
+        self.timer_value.setVisible(False)
+        mode_card_layout.addWidget(self.timer_value)
+        
         layout.addWidget(self.mode_card)
         layout.addStretch()
     
@@ -412,20 +448,37 @@ class OutputConfigWidget(QWidget):
         if enabled:
             self._on_mode_changed(self.mode_combo.currentIndex())
         else:
+            # Hide POWERCELL PWM controls
             self.pwm_label.setVisible(False)
             self.pwm_slider.setVisible(False)
             self.pwm_value.setVisible(False)
+            # Hide inMOTION timer controls
+            self.timer_label.setVisible(False)
+            self.timer_slider.setVisible(False)
+            self.timer_value.setVisible(False)
         
         self.changed.emit()
     
     def _on_mode_changed(self, index):
         mode = self.mode_combo.currentData()
-        self.config.mode = mode if mode else OutputMode.TRACK
+        default_mode = OutputMode.ON if self.device_type == "inmotion" else OutputMode.TRACK
+        self.config.mode = mode if mode else default_mode
         
-        show_pwm = (mode == OutputMode.PWM and self.enable_check.isChecked())
+        is_enabled = self.enable_check.isChecked()
+        
+        # Show PWM controls for POWERCELL PWM mode
+        show_pwm = (mode == OutputMode.PWM and is_enabled and self.device_type == "powercell")
         self.pwm_label.setVisible(show_pwm)
         self.pwm_slider.setVisible(show_pwm)
         self.pwm_value.setVisible(show_pwm)
+        
+        # Show timer controls only for inMOTION TIMED mode
+        # ON, OFF, and Express are discrete modes without configurable timers
+        show_timer = (is_enabled and self.device_type == "inmotion" and 
+                      mode == OutputMode.TIMED)
+        self.timer_label.setVisible(show_timer)
+        self.timer_slider.setVisible(show_timer)
+        self.timer_value.setVisible(show_timer)
         
         self.changed.emit()
     
@@ -435,11 +488,21 @@ class OutputConfigWidget(QWidget):
         self.pwm_value.setText(f"{percent}%")
         self.changed.emit()
     
+    def _on_timer_changed(self, value):
+        self.config.inmotion_timer = value
+        seconds = value * 0.25
+        if seconds == 0:
+            self.timer_value.setText("0s")
+        else:
+            self.timer_value.setText(f"{seconds:.2f}s")
+        self.changed.emit()
+    
     def get_config(self) -> OutputConfig:
         return OutputConfig(
             enabled=self.enable_check.isChecked(),
             mode=self.mode_combo.currentData() if self.enable_check.isChecked() else OutputMode.OFF,
-            pwm_duty=self.pwm_slider.value()
+            pwm_duty=self.pwm_slider.value(),
+            inmotion_timer=self.timer_slider.value()
         )
     
     def set_config(self, config: OutputConfig):
@@ -448,6 +511,7 @@ class OutputConfigWidget(QWidget):
         self.enable_check.blockSignals(True)
         self.mode_combo.blockSignals(True)
         self.pwm_slider.blockSignals(True)
+        self.timer_slider.blockSignals(True)
         
         try:
             self.config = config
@@ -459,19 +523,35 @@ class OutputConfigWidget(QWidget):
                 self.mode_combo.setCurrentIndex(idx)
             
             self.pwm_slider.setValue(config.pwm_duty)
+            self.timer_slider.setValue(config.inmotion_timer)
             
-            # Update PWM visibility manually since we blocked signals
-            show_pwm = (config.mode == OutputMode.PWM and config.enabled)
+            # Update PWM visibility manually since we blocked signals (POWERCELL only)
+            show_pwm = (config.mode == OutputMode.PWM and config.enabled and self.device_type == "powercell")
             self.pwm_label.setVisible(show_pwm)
             self.pwm_slider.setVisible(show_pwm)
             self.pwm_value.setVisible(show_pwm)
             if show_pwm:
                 percent = int((config.pwm_duty / 15) * 100)
                 self.pwm_value.setText(f"{percent}%")
+            
+            # Update timer visibility manually since we blocked signals
+            # Only show timer for inMOTION TIMED mode
+            show_timer = (config.enabled and self.device_type == "inmotion" and 
+                          config.mode == OutputMode.TIMED)
+            self.timer_label.setVisible(show_timer)
+            self.timer_slider.setVisible(show_timer)
+            self.timer_value.setVisible(show_timer)
+            if show_timer:
+                seconds = config.inmotion_timer * 0.25
+                if seconds == 0:
+                    self.timer_value.setText("0s")
+                else:
+                    self.timer_value.setText(f"{seconds:.2f}s")
         finally:
             self.enable_check.blockSignals(False)
             self.mode_combo.blockSignals(False)
             self.pwm_slider.blockSignals(False)
+            self.timer_slider.blockSignals(False)
     
     def set_basic_mode(self, basic_mode: bool):
         """
@@ -493,9 +573,12 @@ class OutputConfigWidget(QWidget):
             self.enable_check.setEnabled(False)
             # Mode combo should remain enabled
             self.mode_combo.setEnabled(True)
-            # PWM slider should stay enabled if in PWM mode
+            # PWM slider should stay enabled if in PWM mode (POWERCELL)
             if self.mode_combo.currentData() == OutputMode.PWM:
                 self.pwm_slider.setEnabled(True)
+            # Timer slider should stay enabled for inMOTION
+            if self.device_type == "inmotion":
+                self.timer_slider.setEnabled(True)
         else:
             # Normal mode: full control, show everything
             self.setVisible(True)
@@ -503,6 +586,7 @@ class OutputConfigWidget(QWidget):
             # Mode combo state depends on whether output is enabled
             self.mode_combo.setEnabled(self.enable_check.isChecked())
             self.pwm_slider.setEnabled(self.enable_check.isChecked())
+            self.timer_slider.setEnabled(self.enable_check.isChecked())
     
     def set_locked_mode(self, locked: bool):
         """
@@ -523,18 +607,21 @@ class OutputConfigWidget(QWidget):
             self.enable_check.setEnabled(False)
             self.mode_combo.setEnabled(False)
             self.pwm_slider.setEnabled(False)
+            self.timer_slider.setEnabled(False)
         else:
             # Restore normal state
             self.setVisible(True)
             self.enable_check.setEnabled(True)
             self.mode_combo.setEnabled(self.enable_check.isChecked())
             self.pwm_slider.setEnabled(self.enable_check.isChecked())
+            self.timer_slider.setEnabled(self.enable_check.isChecked())
     
     def reset(self):
         """Reset to default state. Blocks signals to prevent change cascade."""
         self.enable_check.blockSignals(True)
         self.mode_combo.blockSignals(True)
         self.pwm_slider.blockSignals(True)
+        self.timer_slider.blockSignals(True)
         try:
             self.enable_check.setChecked(False)
             self.mode_combo.setEnabled(False)
@@ -543,11 +630,16 @@ class OutputConfigWidget(QWidget):
             self.pwm_label.setVisible(False)
             self.pwm_slider.setVisible(False)
             self.pwm_value.setVisible(False)
+            self.timer_slider.setValue(0)
+            self.timer_label.setVisible(False)
+            self.timer_slider.setVisible(False)
+            self.timer_value.setVisible(False)
             self.config = OutputConfig()
         finally:
             self.enable_check.blockSignals(False)
             self.mode_combo.blockSignals(False)
             self.pwm_slider.blockSignals(False)
+            self.timer_slider.blockSignals(False)
 
 
 class DeviceOutputsWidget(QWidget):
@@ -555,11 +647,12 @@ class DeviceOutputsWidget(QWidget):
     
     changed = pyqtSignal()
     
-    def __init__(self, device: DeviceDefinition, show_header: bool = True, parent=None):
+    def __init__(self, device: DeviceDefinition, show_header: bool = True, case_type: str = "on", parent=None):
         super().__init__(parent)
         self.device = device
         self.output_widgets = []
         self.show_header = show_header
+        self.case_type = case_type  # "on" or "off" - passed to output widgets
         self._enabled = False
         
         self._setup_ui()
@@ -623,7 +716,7 @@ class DeviceOutputsWidget(QWidget):
             output_num = i + 1
             supports_pwm = (self.device.device_type == "powercell" and output_num <= 8)
             
-            widget = OutputConfigWidget(output_num, output_name, supports_pwm)
+            widget = OutputConfigWidget(output_num, output_name, supports_pwm, self.device.device_type, self.case_type)
             widget.changed.connect(self.changed)
             self.output_widgets.append(widget)
             outputs_layout.addWidget(widget)
@@ -971,8 +1064,9 @@ class CaseEditor(QWidget):
         self.outputs_layout.setContentsMargins(0, 8, 0, 0)
         
         # Create device widgets but keep them hidden initially
+        # Pass case_type so output modes are filtered appropriately (ON vs OFF cases)
         for device_id, device in DEVICES.items():
-            widget = DeviceOutputsWidget(device, show_header=False)
+            widget = DeviceOutputsWidget(device, show_header=False, case_type=self.case_type)
             widget.changed.connect(self.changed)
             widget.setVisible(False)
             self.device_widgets[device_id] = widget
@@ -2477,6 +2571,7 @@ class InputConfigPanel(QWidget):
         super().__init__(parent)
         self.current_input = None
         self._current_view_mode = ViewMode.ADVANCED  # Default view mode
+        self._loading_config = False  # Flag to prevent auto-sync during config loading
         self._setup_ui()
     
     def _setup_ui(self):
@@ -2563,6 +2658,7 @@ class InputConfigPanel(QWidget):
         for i in range(self.MAX_ON_CASES):
             editor = CaseEditor('on', i)
             editor.changed.connect(self.changed)
+            editor.changed.connect(self._sync_inmotion_off_cases)  # Auto-generate OFF cases
             self.on_case_editors.append(editor)
             self.scroll_layout.addWidget(editor)
         
@@ -2649,26 +2745,32 @@ class InputConfigPanel(QWidget):
     
     def set_config(self, config: InputConfig, is_default: bool = False):
         """Set configuration. is_default=True marks cases loaded from preset."""
-        self.custom_name_edit.blockSignals(True)
-        self.custom_name_edit.setText(config.custom_name)
-        self.custom_name_edit.blockSignals(False)
+        # Prevent auto-sync during loading
+        self._loading_config = True
         
-        # Get case counts for this input
-        input_number = config.input_number
-        on_count, off_count = get_case_counts(input_number)
-        
-        # Set case configs for visible editors only
-        for i in range(min(on_count, len(self.on_case_editors), len(config.on_cases))):
-            self.on_case_editors[i].set_config(config.on_cases[i], is_default=is_default)
-        
-        for i in range(min(off_count, len(self.off_case_editors), len(config.off_cases))):
-            self.off_case_editors[i].set_config(config.off_cases[i], is_default=is_default)
-        
-        # Update Basic mode visibility (hide disabled cases in Basic mode)
-        self._update_basic_mode_visibility()
-        
-        # Re-apply locked state after config is set (ensures locked UI is shown)
-        self._update_locked_state()
+        try:
+            self.custom_name_edit.blockSignals(True)
+            self.custom_name_edit.setText(config.custom_name)
+            self.custom_name_edit.blockSignals(False)
+            
+            # Get case counts for this input
+            input_number = config.input_number
+            on_count, off_count = get_case_counts(input_number)
+            
+            # Set case configs for visible editors only
+            for i in range(min(on_count, len(self.on_case_editors), len(config.on_cases))):
+                self.on_case_editors[i].set_config(config.on_cases[i], is_default=is_default)
+            
+            for i in range(min(off_count, len(self.off_case_editors), len(config.off_cases))):
+                self.off_case_editors[i].set_config(config.off_cases[i], is_default=is_default)
+            
+            # Update Basic mode visibility (hide disabled cases in Basic mode)
+            self._update_basic_mode_visibility()
+            
+            # Re-apply locked state after config is set (ensures locked UI is shown)
+            self._update_locked_state()
+        finally:
+            self._loading_config = False
     
     def set_view_mode(self, mode):
         """
@@ -2766,6 +2868,86 @@ class InputConfigPanel(QWidget):
             # In Advanced/Admin mode, show if there are any OFF cases available
             self.off_label.setVisible(off_count > 0)
     
+    def _sync_inmotion_off_cases(self):
+        """
+        Auto-generate OFF cases for inMOTION outputs set to "ON" mode.
+        
+        Rules:
+        - inMOTION outputs with "ON" mode in ON cases MUST have a corresponding OFF case
+        - inMOTION outputs with "Express" or "Timed" mode are self-terminating (no OFF case needed)
+        - When an ON case has inMOTION outputs with "ON" mode, auto-enable OFF case 1
+          with those outputs set to "OFF" mode
+        """
+        # Don't run during config loading or if no input selected
+        if self._loading_config or not self.current_input:
+            return
+        
+        # Get case counts for this input
+        on_count, off_count = get_case_counts(self.current_input.number)
+        if off_count == 0:
+            return  # No OFF cases available for this input
+        
+        # Collect all inMOTION outputs that need OFF cases (set to "ON" mode in any ON case)
+        # Format: device_id -> {output_num: OutputConfig}
+        outputs_needing_off = {}
+        
+        for i, editor in enumerate(self.on_case_editors):
+            if i >= on_count or not editor.enable_check.isChecked():
+                continue
+            
+            config = editor.get_config()
+            # device_outputs is a List[Tuple[str, Dict[int, OutputConfig]]]
+            for device_id, outputs in config.device_outputs:
+                device = DEVICES.get(device_id)
+                if not device or device.device_type != "inmotion":
+                    continue
+                
+                for out_num, out_config in outputs.items():
+                    if out_config.enabled and out_config.mode == OutputMode.ON:
+                        # This output needs an OFF case
+                        if device_id not in outputs_needing_off:
+                            outputs_needing_off[device_id] = {}
+                        outputs_needing_off[device_id][out_num] = OutputConfig(
+                            enabled=True,
+                            mode=OutputMode.OFF
+                        )
+        
+        if not outputs_needing_off:
+            return  # No inMOTION outputs with "ON" mode
+        
+        # Get the first OFF case editor
+        if len(self.off_case_editors) > 0 and off_count > 0:
+            off_editor = self.off_case_editors[0]
+            
+            # Get current OFF case config (preserving existing configs)
+            off_config = off_editor.get_config()
+            
+            # Convert device_outputs list to dict for easier merging
+            existing_outputs = {dev_id: outputs for dev_id, outputs in off_config.device_outputs}
+            
+            # Merge in the required OFF outputs
+            for device_id, outputs in outputs_needing_off.items():
+                if device_id not in existing_outputs:
+                    existing_outputs[device_id] = {}
+                for out_num, out_config in outputs.items():
+                    existing_outputs[device_id][out_num] = out_config
+            
+            # Convert back to list format
+            off_config.device_outputs = list(existing_outputs.items())
+            
+            # Enable the OFF case and set the config
+            off_config.enabled = True
+            
+            # Block signals to prevent infinite loop, then update
+            off_editor.blockSignals(True)
+            off_editor.set_config(off_config, is_default=False)
+            off_editor.blockSignals(False)
+            
+            # Make sure OFF case is visible in Basic mode
+            if self._current_view_mode == ViewMode.BASIC:
+                off_editor.setVisible(True)
+                self.off_label.setVisible(True)
+
     def _update_locked_state(self):
         """
         Update the locked state based on current input and view mode.

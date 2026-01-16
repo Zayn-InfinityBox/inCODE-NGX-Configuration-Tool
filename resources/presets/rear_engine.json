@@ -34,7 +34,8 @@
                 "4": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -185,7 +186,8 @@
                 "5": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -294,7 +296,8 @@
                 "1": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -327,7 +330,8 @@
                 "1": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -411,7 +415,8 @@
                 "2": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -444,7 +449,8 @@
                 "2": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -528,7 +534,8 @@
                 "5": {
                   "enabled": true,
                   "mode": 2,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -613,7 +620,8 @@
                 "6": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -646,7 +654,8 @@
                 "6": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -774,7 +783,8 @@
                 "7": {
                   "enabled": true,
                   "mode": 2,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -814,12 +824,14 @@
                 "1": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 },
                 "2": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -852,12 +864,14 @@
                 "1": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 },
                 "2": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -985,7 +999,8 @@
                 "9": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1025,7 +1040,8 @@
                 "8": {
                   "enabled": true,
                   "mode": 2,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1087,12 +1103,14 @@
                 "1": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 },
                 "2": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1154,7 +1172,8 @@
                 "3": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1216,7 +1235,8 @@
                 "10": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1329,7 +1349,8 @@
                 "4": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1364,7 +1385,8 @@
                 "5": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1545,7 +1567,8 @@
                 "7": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1607,7 +1630,8 @@
                 "4": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1757,7 +1781,8 @@
                 "10": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1819,7 +1844,8 @@
                 "3": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1881,7 +1907,8 @@
                 "8": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1943,7 +1970,8 @@
                 "9": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -1997,8 +2025,20 @@
       "custom_name": "Door Lock",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2019,8 +2059,20 @@
           "require_security_off": false
         },
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2041,8 +2093,20 @@
           "require_security_off": false
         },
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2063,8 +2127,20 @@
           "require_security_off": false
         },
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "3": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2136,8 +2212,20 @@
       "custom_name": "Door Unlock",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2158,8 +2246,20 @@
           "require_security_off": false
         },
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2180,8 +2280,20 @@
           "require_security_off": false
         },
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2202,8 +2314,20 @@
           "require_security_off": false
         },
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "4": {
+                  "enabled": true,
+                  "mode": 7,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2275,8 +2399,20 @@
       "custom_name": "Window DF Up",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2321,8 +2457,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2371,8 +2519,20 @@
       "custom_name": "Window PF Up",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2417,8 +2577,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_1",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2467,8 +2639,20 @@
       "custom_name": "Window DR Up",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2513,8 +2697,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2563,8 +2759,20 @@
       "custom_name": "Window PR Up",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2609,8 +2817,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_2",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2659,8 +2879,20 @@
       "custom_name": "Window DF Down",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2705,8 +2937,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2755,8 +2999,20 @@
       "custom_name": "Window PF Down",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2801,8 +3057,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_3",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2851,8 +3119,20 @@
       "custom_name": "Window DR Down",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2897,8 +3177,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "1": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2947,8 +3239,20 @@
       "custom_name": "Window PR Down",
       "on_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 4,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -2993,8 +3297,20 @@
       ],
       "off_cases": [
         {
-          "enabled": false,
-          "device_outputs": [],
+          "enabled": true,
+          "device_outputs": [
+            [
+              "inmotion_4",
+              {
+                "2": {
+                  "enabled": true,
+                  "mode": 0,
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
+                }
+              }
+            ]
+          ],
           "mode": "track",
           "timer_execution_mode": "fire_and_forget",
           "timer_on_value": 0,
@@ -3225,7 +3541,8 @@
                 "8": {
                   "enabled": true,
                   "mode": 2,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]
@@ -3287,7 +3604,8 @@
                 "10": {
                   "enabled": true,
                   "mode": 1,
-                  "pwm_duty": 0
+                  "pwm_duty": 0,
+                  "inmotion_timer": 0
                 }
               }
             ]

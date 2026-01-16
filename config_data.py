@@ -28,10 +28,17 @@ class RebroadcastMode(IntEnum):
     PERIODIC = 0x02
 
 class OutputMode(IntEnum):
-    OFF = 0
+    """Output modes for POWERCELL and inMOTION devices"""
+    OFF = 0         # OFF/disabled (inMOTION: 0x80 motor stop)
+    # POWERCELL modes
     TRACK = 1
     SOFT_START = 2
     PWM = 3
+    # inMOTION modes
+    ON = 4          # ON mode (inMOTION: 0x90 motor run)
+    EXPRESS = 5     # Express mode for relays (quick toggle, self-terminating)
+    TIMED = 6       # Timed mode (uses inmotion_timer, self-terminating)
+    ALL_MOTORS = 7  # All motors command (0xA2 for lock/unlock)
 
 # Source Address ranges by device type
 SA_MASTERCELL = 0x0E
@@ -226,32 +233,32 @@ DEVICES = {
         name="inMOTION 1",
         pgn_high=0xFF, pgn_low=0x03,
         device_type="inmotion",
-        outputs=["Relay 1A", "Relay 1B", "Relay 2A", "Relay 2B",
-                 "Output 1", "Output 2", "Output 3", "Output 4"]
+        outputs=["Window Up", "Window Down", "Door Lock", "Door Unlock",
+                 "Switch Illumination", "Interior Lights", "AUX 03", "AUX 04"]
     ),
     "inmotion_2": DeviceDefinition(
         id="inmotion_2",
         name="inMOTION 2",
         pgn_high=0xFF, pgn_low=0x04,
         device_type="inmotion",
-        outputs=["Relay 1A", "Relay 1B", "Relay 2A", "Relay 2B",
-                 "Output 1", "Output 2", "Output 3", "Output 4"]
+        outputs=["Window Up", "Window Down", "Door Lock", "Door Unlock",
+                 "Switch Illumination", "Interior Lights", "AUX 03", "AUX 04"]
     ),
     "inmotion_3": DeviceDefinition(
         id="inmotion_3",
         name="inMOTION 3",
         pgn_high=0xFF, pgn_low=0x05,
         device_type="inmotion",
-        outputs=["Relay 1A", "Relay 1B", "Relay 2A", "Relay 2B",
-                 "Output 1", "Output 2", "Output 3", "Output 4"]
+        outputs=["Window Up", "Window Down", "Door Lock", "Door Unlock",
+                 "Switch Illumination", "Interior Lights", "AUX 03", "AUX 04"]
     ),
     "inmotion_4": DeviceDefinition(
         id="inmotion_4",
         name="inMOTION 4",
         pgn_high=0xFF, pgn_low=0x06,
         device_type="inmotion",
-        outputs=["Relay 1A", "Relay 1B", "Relay 2A", "Relay 2B",
-                 "Output 1", "Output 2", "Output 3", "Output 4"]
+        outputs=["Window Up", "Window Down", "Door Lock", "Door Unlock",
+                 "Switch Illumination", "Interior Lights", "AUX 03", "AUX 04"]
     ),
 }
 
@@ -291,7 +298,8 @@ class OutputConfig:
     """Configuration for a single output"""
     enabled: bool = False
     mode: OutputMode = OutputMode.OFF
-    pwm_duty: int = 0  # 0-15 (4-bit)
+    pwm_duty: int = 0  # 0-15 (4-bit) for POWERCELL PWM
+    inmotion_timer: int = 0  # 0-15 (4-bit, each count = 0.25s) for inMOTION
 
 @dataclass
 class DeviceOutputConfig:
@@ -425,44 +433,58 @@ def encode_inmotion_message(output_configs: Dict[int, OutputConfig]) -> List[int
     """
     Encode inMOTION output configurations into 8-byte CAN message.
     
-    inMOTION Message Format (per byte):
+    Modes:
+    - ON (0x90): Motor ON/RUN command - only valid in ON cases
+    - OFF (0x80): Motor OFF/STOP command - only valid in OFF cases  
+    - EXPRESS: Self-terminating quick toggle (personality 11 + timer)
+    - TIMED: Self-terminating with timer (personality 01 + timer > 0)
+    - ALL_MOTORS (0xA2): All motors command for lock/unlock
+    
+    Self-terminating modes (EXPRESS, TIMED) do not require an OFF case.
+    Non-self-terminating ON mode requires a corresponding OFF case.
+    
+    Byte encoding for timed/express modes:
     - Bit 0: Modifier bit (1 = change output, 0 = ignore)
     - Bit 1: Unused
-    - Bits 2-3: Output Personality (00=OFF, 01=ON, 10=ON, 11=Express for relays)
-    - Bits 4-7: Timer Value (each count = 0.25 sec)
+    - Bits 2-3: Output Personality (00=OFF, 01=ON, 10=unused, 11=Express)
+    - Bits 4-7: Timer Value (each count = 0.25 sec, 0-15 = 0-3.75 sec)
     
     Byte assignments:
-    - Byte 0: Relay 1A
-    - Byte 1: Relay 1B
-    - Byte 2: Relay 2A
-    - Byte 3: Relay 2B
-    - Byte 4: Mosfet 1 (Output 1)
-    - Byte 5: Mosfet 2 (Output 2)
-    - Byte 6: Mosfet 3 (Output 3)
-    - Byte 7: Mosfet 4 (Output 4)
-    
-    Output mapping:
-    - 1 = Relay 1A (byte 0)
-    - 2 = Relay 1B (byte 1)
-    - 3 = Relay 2A (byte 2)
-    - 4 = Relay 2B (byte 3)
-    - 5 = Mosfet 1 (byte 4)
-    - 6 = Mosfet 2 (byte 5)
-    - 7 = Mosfet 3 (byte 6)
-    - 8 = Mosfet 4 (byte 7)
+    - Byte 0: Window Up (output 1)
+    - Byte 1: Window Down (output 2)
+    - Byte 2: Door Lock (output 3)
+    - Byte 3: Door Unlock (output 4)
+    - Byte 4: Switch Illumination (output 5)
+    - Byte 5: Interior Lights (output 6)
+    - Byte 6: AUX 03 (output 7)
+    - Byte 7: AUX 04 (output 8)
     """
     data = [0, 0, 0, 0, 0, 0, 0, 0]
     
     for out_num, config in output_configs.items():
-        if not config.enabled or config.mode == OutputMode.OFF:
+        if not config.enabled:
             continue
         
         if 1 <= out_num <= 8:
             byte_idx = out_num - 1
-            # Modifier bit = 1 (change output)
-            # Personality = 01 (ON) in bits 2-3
-            # Timer = 0 for now
-            data[byte_idx] = 0x05  # 0b00000101 = modifier=1, personality=01 (ON)
+            
+            if config.mode == OutputMode.ON:
+                # ON mode = 0x90 (motor run, H-bridge controlled)
+                data[byte_idx] = 0x90
+            elif config.mode == OutputMode.OFF:
+                # OFF mode = 0x80 (motor stop/brake)
+                data[byte_idx] = 0x80
+            elif config.mode == OutputMode.ALL_MOTORS:
+                # All motors command for lock/unlock
+                data[byte_idx] = 0xA2
+            elif config.mode == OutputMode.EXPRESS:
+                # Express mode - self-terminating (personality 11 + timer)
+                timer = min(15, max(0, config.inmotion_timer))
+                data[byte_idx] = 0x01 | (0x03 << 2) | (timer << 4)
+            elif config.mode == OutputMode.TIMED:
+                # Timed mode - self-terminating (personality 01 + timer)
+                timer = min(15, max(1, config.inmotion_timer))  # Ensure timer > 0
+                data[byte_idx] = 0x01 | (0x01 << 2) | (timer << 4)
     
     return data
 

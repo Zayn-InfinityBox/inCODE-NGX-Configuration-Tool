@@ -30,7 +30,7 @@ EEPROM_GUARD_BYTE = 0x77
 DEFAULT_WRITE_PGN = 0xFF10
 DEFAULT_READ_PGN = 0xFF20
 DEFAULT_RESPONSE_PGN = 0xFF30
-DEFAULT_SA = 0x80
+DEFAULT_SA = 0x1A  # MASTERCELL source address (26 decimal)
 
 # Priority for configuration messages
 CAN_PRIORITY = 6  # Default J1939 priority
